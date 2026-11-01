@@ -35,7 +35,8 @@ export default function SidebarMenuItem({
     nav.subItems?.some(
       (subItem) =>
         subItem.path === pathname ||
-        (subItem.path === "/ai-settings" && pathname.startsWith("/ai-settings")),
+        (subItem.path === "/ai-settings" &&
+          pathname.startsWith("/ai-settings")),
     ),
   );
   const isDirectActive = Boolean(nav.path && nav.path === pathname);
@@ -68,7 +69,7 @@ export default function SidebarMenuItem({
             {nav.new && showContent && (
               <span
                 className={cn(
-                  "menu-dropdown-badge absolute inset-e-10 ms-auto",
+                  "absolute inset-e-10 ms-auto menu-dropdown-badge",
                   isItemActive
                     ? "menu-dropdown-badge-active"
                     : "menu-dropdown-badge-inactive",

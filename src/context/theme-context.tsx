@@ -1,87 +1,74 @@
 "use client";
 
-import type React from "react";
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useSyncExternalStore,
+} from "react";
 
 type ThemeMode = "light" | "dark" | "auto";
 type ResolvedTheme = "light" | "dark";
-
-type ThemeContextType = {
-  theme: ResolvedTheme; // Resolved theme actually active ("light" or "dark")
-  themeMode: ThemeMode; // The configured preference ("light", "dark", or "auto")
+interface ThemeContextType {
+  theme: ResolvedTheme;
+  themeMode: ThemeMode;
   setThemeMode: (mode: ThemeMode) => void;
   toggleTheme: () => void;
-};
-
+}
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-
-export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const [themeMode, setThemeModeState] = useState<ThemeMode>("light");
-  const [theme, setTheme] = useState<ResolvedTheme>("light");
-  const [isInitialized, setIsInitialized] = useState(false);
-
+const eventName = "rental-theme-change";
+function subscribe(onChange: () => void) {
+  const media = window.matchMedia("(prefers-color-scheme: dark)");
+  window.addEventListener("storage", onChange);
+  window.addEventListener(eventName, onChange);
+  media.addEventListener("change", onChange);
+  return () => {
+    window.removeEventListener("storage", onChange);
+    window.removeEventListener(eventName, onChange);
+    media.removeEventListener("change", onChange);
+  };
+}
+function readMode(): ThemeMode {
+  try {
+    const stored =
+      localStorage.getItem("theme-mode") ?? localStorage.getItem("theme");
+    return stored === "dark" || stored === "auto" ? stored : "light";
+  } catch {
+    return "light";
+  }
+}
+function readSnapshot() {
+  const mode = readMode();
+  const resolved =
+    mode === "auto"
+      ? window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light"
+      : mode;
+  return `${mode}:${resolved}`;
+}
+function serverSnapshot() {
+  return "light:light";
+}
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const snapshot = useSyncExternalStore(
+    subscribe,
+    readSnapshot,
+    serverSnapshot,
+  );
+  const [themeMode, theme] = snapshot.split(":") as [ThemeMode, ResolvedTheme];
   useEffect(() => {
-    // This code will only run on the client side
-    const savedMode = localStorage.getItem("theme-mode") as ThemeMode | null;
-    const legacySavedTheme = localStorage.getItem(
-      "theme",
-    ) as ResolvedTheme | null;
-    const initialMode = savedMode || (legacySavedTheme as ThemeMode) || "light";
-
-    setThemeModeState(initialMode);
-    setIsInitialized(true);
-  }, []);
-
-  useEffect(() => {
-    if (!isInitialized) return;
-
-    localStorage.setItem("theme-mode", themeMode);
-
-    if (themeMode === "auto") {
-      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-
-      const handleChange = () => {
-        const resolved = mediaQuery.matches ? "dark" : "light";
-        setTheme(resolved);
-      };
-
-      handleChange();
-
-      mediaQuery.addEventListener("change", handleChange);
-      return () => {
-        mediaQuery.removeEventListener("change", handleChange);
-      };
-    } else {
-      setTheme(themeMode as ResolvedTheme);
-    }
-  }, [themeMode, isInitialized]);
-
-  useEffect(() => {
-    if (isInitialized) {
-      localStorage.setItem("theme", theme);
-      if (theme === "dark") {
-        document.documentElement.classList.add("dark");
-        document.documentElement.setAttribute("data-color-scheme", "dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-        document.documentElement.setAttribute("data-color-scheme", "light");
-      }
-    }
-  }, [theme, isInitialized]);
-
+    document.documentElement.classList.toggle("dark", theme === "dark");
+  }, [theme]);
   const setThemeMode = (mode: ThemeMode) => {
-    setThemeModeState(mode);
+    try {
+      localStorage.setItem("theme-mode", mode);
+    } catch {
+      return;
+    }
+    window.dispatchEvent(new Event(eventName));
   };
-
-  const toggleTheme = () => {
-    setThemeModeState((prevMode) => {
-      const currentResolved = theme;
-      return currentResolved === "light" ? "dark" : "light";
-    });
-  };
-
+  const toggleTheme = () => setThemeMode(theme === "dark" ? "light" : "dark");
   return (
     <ThemeContext.Provider
       value={{ theme, themeMode, setThemeMode, toggleTheme }}
@@ -89,12 +76,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
       {children}
     </ThemeContext.Provider>
   );
-};
-
-export const useTheme = () => {
+}
+export function useTheme() {
   const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider");
-  }
+  if (!context) throw new Error("useTheme must be used within ThemeProvider");
   return context;
-};
+}

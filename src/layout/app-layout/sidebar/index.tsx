@@ -1,17 +1,11 @@
 "use client";
 
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  useSidebar,
-} from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent, useSidebar } from "@/components/ui/sidebar";
 import { usePathname } from "@/i18n/navigation";
 import { useState } from "react";
 import { navItems, othersItems, supportItems } from "./data";
 import AppSidebarHeader from "./sidebar-header";
 import SidebarNavGroup from "./sidebar-nav-group";
-import SidebarWidget from "./sidebar-widget";
 import { MenuType, NavItem } from "./types";
 
 const menuSections: { type: MenuType; labelKey: string; items: NavItem[] }[] = [
@@ -28,7 +22,8 @@ const findMatchingSubmenu = (path: string) => {
         nav.subItems?.some(
           (subItem) =>
             subItem.path === path ||
-            (subItem.path === "/ai-settings" && path.startsWith("/ai-settings")),
+            (subItem.path === "/ai-settings" &&
+              path.startsWith("/ai-settings")),
         )
       ) {
         return { type: section.type, index };
@@ -94,12 +89,6 @@ export default function AppSidebar() {
           </div>
         </nav>
       </SidebarContent>
-
-      {showContent && (
-        <SidebarFooter className="p-0 px-5 pt-1 pb-4">
-          <SidebarWidget />
-        </SidebarFooter>
-      )}
     </Sidebar>
   );
 }

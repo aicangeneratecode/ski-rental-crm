@@ -94,3 +94,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+
+## Ski Rental CRM overrides
+
+The application is Russian-only (`ru`, `src/messages/ru.json`). Update Russian messages only; references above to four locales and Pro demo routes describe the original template. Current routes live under `src/app/(admin)`. The locale is fixed to ru in the root layout and request config; no locale proxy is needed. Removed demos must not be reintroduced. Discounts and free items are explicitly enabled by staff, never applied implicitly. Currency is RSD, timezone Europe/Belgrade. This cleanup is an interface foundation, not a working rental backend.

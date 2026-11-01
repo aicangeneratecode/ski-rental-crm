@@ -1,57 +1,25 @@
 "use client";
-
 import { SidebarHeader } from "@/components/ui/sidebar";
 import { Link } from "@/i18n/navigation";
-import { cn } from "@/utils";
-import Image from "next/image";
-
+import { useTranslations } from "next-intl";
 interface AppSidebarHeaderProps {
   showContent: boolean;
 }
-
 export default function AppSidebarHeader({
   showContent,
 }: AppSidebarHeaderProps) {
+  const t = useTranslations("crm");
   return (
     <SidebarHeader className="px-5 py-8">
       <Link
         href="/"
-        className={cn(
-          "flex items-center",
-          !showContent ? "justify-center" : "justify-start",
-        )}
+        aria-label={t("brand")}
+        className="flex items-center gap-3 text-gray-900 dark:text-white"
       >
-        {showContent ? (
-          <>
-            <Image
-              className="dark:hidden"
-              src="/images/logo/logo.svg"
-              alt="Logo"
-              width={150}
-              height={40}
-              priority
-              style={{ width: "auto", height: "auto" }}
-            />
-            <Image
-              className="hidden dark:block"
-              src="/images/logo/logo-dark.svg"
-              alt="Logo"
-              width={150}
-              height={40}
-              priority
-              style={{ width: "auto", height: "auto" }}
-            />
-          </>
-        ) : (
-          <Image
-            src="/images/logo/logo-icon.svg"
-            alt="Logo"
-            width={32}
-            height={32}
-            priority
-            style={{ width: "auto", height: "auto" }}
-          />
-        )}
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-500 font-bold text-white">
+          S
+        </span>
+        {showContent && <span className="font-semibold">{t("brand")}</span>}
       </Link>
     </SidebarHeader>
   );
