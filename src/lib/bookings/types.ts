@@ -18,6 +18,7 @@ export type BookingCustomer = {
   
   export type BookingRow = {
     id: string;
+    version: number;
     customerName: string;
     customerPhone: string;
     startDate: string;

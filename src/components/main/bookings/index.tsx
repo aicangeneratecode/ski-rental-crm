@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import BookingActions from "./booking-actions";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -134,6 +135,10 @@ export default function Bookings({
                   <span>{t("total")}</span>
                   <span>{formatBookingMoney(row.total)}</span>
                 </div>
+                <BookingActions
+                key={`${row.id}-${row.version}`}
+                booking={row}
+                />
               </article>
             ))}
           </div>

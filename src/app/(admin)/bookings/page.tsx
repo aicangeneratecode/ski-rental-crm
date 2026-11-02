@@ -60,6 +60,7 @@ async function loadData() {
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       select: {
         id: true,
+        version: true,
         startDate: true,
         endDate: true,
         status: true,
@@ -100,6 +101,7 @@ async function loadData() {
     })),
     rows: bookings.map((booking) => ({
       id: booking.id,
+      version: booking.version,
       customerName: booking.customer.name,
       customerPhone: booking.customer.phone,
       startDate: dateOnly(booking.startDate),
