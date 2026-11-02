@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import BookingActions from "./booking-actions";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   formatBookingDate,
   formatBookingMoney,
@@ -13,6 +13,8 @@ import {
   type BookingRow,
 } from "@/lib/bookings/types";
 
+import BookingActions from "./booking-actions";
+import BookingDetails from "./booking-details";
 import BookingForm from "./booking-form";
 
 type Props = {
@@ -20,6 +22,16 @@ type Props = {
   customers: BookingCustomer[];
   equipment: BookingEquipment[];
 };
+
+type StatusFilter = "all" | BookingRow["status"];
+
+const statuses: StatusFilter[] = [
+  "all",
+  "RESERVED",
+  "ISSUED",
+  "RETURNED",
+  "CANCELLED",
+];
 
 const statusClasses: Record<BookingRow["status"], string> = {
   RESERVED:
@@ -32,19 +44,49 @@ const statusClasses: Record<BookingRow["status"], string> = {
     "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
 };
 
-export default function Bookings({
-  rows,
-  customers,
-  equipment,
-}: Props) {
+export default function Bookings({ rows, customers, equipment }: Props) {
   const t = useTranslations("bookings");
   const [open, setOpen] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState<StatusFilter>("all");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
   const canCreate = customers.length > 0 && equipment.length > 0;
+  const selected = rows.find((row) => row.id === selectedId);
+  const invalidDates = !!from && !!to && from > to;
+  const search = query.trim().toLowerCase();
+
+  const visible = rows.filter((row) => {
+    if (invalidDates) return false;
+    if (status !== "all" && row.status !== status) return false;
+    if (from && row.endDate < from) return false;
+    if (to && row.startDate > to) return false;
+
+    const text = [
+      row.id,
+      row.customerName,
+      row.customerPhone,
+      ...row.items.map((item) => `${item.code} ${item.name}`),
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    return text.includes(search);
+  });
+
+  function resetFilters() {
+    setQuery("");
+    setStatus("all");
+    setFrom("");
+    setTo("");
+  }
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-5 text-gray-900 dark:text-gray-100">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {t("description")}
         </p>
@@ -57,7 +99,7 @@ export default function Bookings({
         >
           {t("add")}
         </Button>
-      </div>
+      </header>
 
       {!canCreate && (
         <p className="text-sm text-gray-500">{t("setupHint")}</p>
@@ -69,80 +111,186 @@ export default function Bookings({
         </p>
       )}
 
-      {rows.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-gray-300 p-10 text-center text-gray-500 dark:border-gray-700">
-          {t("empty")}
+      <section className="space-y-4 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+        <div className="flex flex-wrap gap-2">
+          {statuses.map((value) => (
+            <Button
+              key={value}
+              type="button"
+              size="sm"
+              variant={status === value ? "default" : "outline"}
+              aria-pressed={status === value}
+              onClick={() => setStatus(value)}
+            >
+              {value === "all" ? t("layout.all") : t(`statuses.${value}`)}
+              <span className="opacity-70">
+                {value === "all"
+                  ? rows.length
+                  : rows.filter((row) => row.status === value).length}
+              </span>
+            </Button>
+          ))}
+        </div>
+
+        <div className="grid items-end gap-3 lg:grid-cols-4">
+          <div className="lg:col-span-2">
+            <label
+              htmlFor="booking-search"
+              className="mb-1.5 block text-xs text-gray-500"
+            >
+              {t("layout.search")}
+            </label>
+            <Input
+              id="booking-search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t("layout.search")}
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="booking-filter-from"
+              className="mb-1.5 block text-xs text-gray-500"
+            >
+              {t("layout.from")}
+            </label>
+            <Input
+              id="booking-filter-from"
+              type="date"
+              value={from}
+              aria-invalid={invalidDates}
+              onChange={(event) => setFrom(event.target.value)}
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="booking-filter-to"
+              className="mb-1.5 block text-xs text-gray-500"
+            >
+              {t("layout.to")}
+            </label>
+            <Input
+              id="booking-filter-to"
+              type="date"
+              value={to}
+              min={from || undefined}
+              aria-invalid={invalidDates}
+              onChange={(event) => setTo(event.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs text-gray-500">
+            {t("layout.dateHint")}
+          </p>
+          <Button type="button" size="sm" variant="ghost" onClick={resetFilters}>
+            {t("layout.reset")}
+          </Button>
+        </div>
+
+        {invalidDates && (
+          <p role="alert" className="text-sm text-red-600">
+            {t("layout.invalidDates")}
+          </p>
+        )}
+      </section>
+
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500">
+        <p>{t("layout.scope")}</p>
+        <p role="status">{t("layout.shown", { count: visible.length })}</p>
+      </div>
+
+      {visible.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-gray-300 p-10 text-center dark:border-gray-700">
+          <h2 className="font-medium">
+            {rows.length === 0 ? t("empty") : t("layout.empty")}
+          </h2>
+          <p className="mt-2 text-sm text-gray-500">
+            {t("layout.emptyHint")}
+          </p>
         </div>
       ) : (
-        <>
-          <p className="text-xs text-gray-500">{t("recent")}</p>
-          <div className="grid gap-4 xl:grid-cols-2">
-            {rows.map((row) => (
-              <article
-                key={row.id}
-                className="space-y-4 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
+        <div className="space-y-3">
+          {visible.map((row) => (
+            <article
+              key={row.id}
+              className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900"
+            >
+              <div className="grid items-start gap-4 lg:grid-cols-12">
+                <div className="lg:col-span-4">
+                  <div className="flex flex-wrap items-center gap-2">
                     <p className="text-xs text-gray-500">
                       {t("reference", { id: row.id.slice(0, 8) })}
                     </p>
-                    <h2 className="mt-1 font-semibold">
-                      {row.customerName}
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                      {row.customerPhone}
-                    </p>
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs ${statusClasses[row.status]}`}
+                    >
+                      {t(`statuses.${row.status}`)}
+                    </span>
                   </div>
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-medium ${statusClasses[row.status]}`}
-                  >
-                    {t(`statuses.${row.status}`)}
-                  </span>
+                  <h2 className="mt-2 font-semibold">{row.customerName}</h2>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {row.customerPhone}
+                  </p>
                 </div>
 
-                <div className="text-sm">
-                  <p className="font-medium">
+                <div className="lg:col-span-3">
+                  <p className="text-xs text-gray-500">{t("layout.period")}</p>
+                  <p className="mt-2 text-sm font-medium">
                     {formatBookingDate(row.startDate)}
                     {" — "}
                     {formatBookingDate(row.endDate)}
                   </p>
-                  <p className="text-gray-500">
+                  <p className="mt-1 text-xs text-gray-500">
                     {t("paidDays", { count: row.paidDays })}
                   </p>
                 </div>
 
-                <ul className="space-y-1 text-sm">
-                  {row.items.map((item) => (
-                    <li key={item.id}>
-                      {item.code} · {item.name}
-                      {item.complimentary && (
-                        <span className="ms-2 text-green-600">
-                          {t("free")}
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-
-                {row.notes && (
-                  <p className="whitespace-pre-wrap break-words text-sm text-gray-500">
-                    {row.notes}
+                <div className="lg:col-span-3">
+                  <p className="text-xs text-gray-500">
+                    {t("layout.items", { count: row.items.length })}
                   </p>
-                )}
-
-                <div className="flex justify-between border-t border-gray-100 pt-3 font-semibold dark:border-gray-800">
-                  <span>{t("total")}</span>
-                  <span>{formatBookingMoney(row.total)}</span>
+                  <p className="mt-2 line-clamp-2 text-sm">
+                    {row.items.map((item) => item.name).join(", ")}
+                  </p>
                 </div>
+
+                <div className="lg:col-span-2 lg:text-end">
+                  <p className="font-semibold">
+                    {formatBookingMoney(row.total)}
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="mt-3"
+                    onClick={() => setSelectedId(row.id)}
+                  >
+                    {t("layout.details")}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="mt-4">
                 <BookingActions
-                key={`${row.id}-${row.version}`}
-                booking={row}
+                  key={`${row.id}-${row.version}`}
+                  booking={row}
                 />
-              </article>
-            ))}
-          </div>
-        </>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+
+      {selected && (
+        <BookingDetails
+          key={selected.id}
+          booking={selected}
+          onClose={() => setSelectedId(null)}
+        />
       )}
 
       {open && (
