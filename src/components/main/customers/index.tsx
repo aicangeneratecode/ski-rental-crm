@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-
+import CustomerDetails from "./customer-details";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PlusIcon } from "@/icons";
@@ -15,6 +15,9 @@ interface CustomersProps {
 
 export default function Customers({ rows }: CustomersProps) {
   const t = useTranslations("customers");
+  const profileT = useTranslations("customerProfile");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selectedCustomer = rows.find((row) => row.id === selectedId);
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<CustomerRow | "new" | null>(null);
   const [saved, setSaved] = useState(false);
@@ -106,6 +109,14 @@ export default function Customers({ rows }: CustomersProps) {
                   {row.notes}
                 </p>
               )}
+              <Button
+            type="button"
+            variant="outline"
+            className="mt-4"
+            onClick={() => setSelectedId(row.id)}
+            >
+            {profileT("open")}
+            </Button>
             </article>
           ))}
         </div>
@@ -134,6 +145,19 @@ export default function Customers({ rows }: CustomersProps) {
       <p className="text-xs text-gray-500 dark:text-gray-400">
         {t("shown", { count: visible.length, total: rows.length })}
       </p>
+
+      {selectedCustomer && (
+        <CustomerDetails
+            key={selectedCustomer.id}
+            customer={selectedCustomer}
+            onClose={() => setSelectedId(null)}
+            onEdit={() => {
+            setSaved(false);
+            setEditing(selectedCustomer);
+            setSelectedId(null);
+            }}
+        />
+        )}
 
       {editing && (
         <CustomerForm
