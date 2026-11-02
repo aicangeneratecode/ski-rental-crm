@@ -1,25 +1,12 @@
-"use client";
+import AppLayout from "@/layout/app-layout";
+import { requireStaff } from "@/lib/require-staff";
 
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import AppHeader from "@/layout/app-layout/header";
-import AppSidebar from "@/layout/app-layout/sidebar";
-
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <SidebarProvider>
-      <AppSidebar />
+  await requireStaff();
 
-      <SidebarInset>
-        <AppHeader />
-
-        <div className="mx-auto w-full max-w-(--breakpoint-2xl) p-4 md:p-6">
-          {children}
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
-  );
+  return <AppLayout>{children}</AppLayout>;
 }

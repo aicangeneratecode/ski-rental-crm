@@ -1,4 +1,5 @@
 "use client";
+import SignOutButton from "@/components/auth/sign-out-button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/context/theme-context";
@@ -22,6 +23,7 @@ export default function AppHeader() {
       >
         {theme === "dark" ? <SunIcon /> : <MoonIcon />}
       </Button>
+      <SignOutButton />
     </header>
   );
 }

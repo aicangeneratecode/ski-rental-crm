@@ -6,9 +6,12 @@ import EquipmentCatalog from "@/components/main/equipment";
 import { getDb } from "@/lib/db";
 import { equipmentSchema } from "@/lib/equipment/schema";
 import type { EquipmentRow } from "@/lib/equipment/types";
+import { requireStaff } from "@/lib/require-staff";
+
 export const metadata: Metadata = { title: "Оборудование | Ski Rental CRM" };
 export const dynamic = "force-dynamic";
 export default async function Page() {
+  await requireStaff();
   setRequestLocale("ru");
   const t = await getTranslations("inventory");
   let rows: EquipmentRow[] = [];
@@ -41,10 +44,7 @@ export default async function Page() {
           </code>
         </ComponentCard>
       ) : (
-        <EquipmentCatalog
-          rows={rows}
-          readOnly={process.env.NODE_ENV !== "development"}
-        />
+        <EquipmentCatalog rows={rows} readOnly={false} />
       )}
     </>
   );
