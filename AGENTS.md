@@ -95,7 +95,6 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-
 ## Ski Rental CRM overrides
 
-The application is Russian-only (`ru`, `src/messages/ru.json`). Update Russian messages only; references above to four locales and Pro demo routes describe the original template. Current routes live under `src/app/(admin)`. The locale is fixed to ru in the root layout and request config; no locale proxy is needed. Removed demos must not be reintroduced. Discounts and free items are explicitly enabled by staff, never applied implicitly. Currency is RSD, timezone Europe/Belgrade. This cleanup is an interface foundation, not a working rental backend.
+The application is Russian-only (`ru`, `src/messages/ru.json`). Update Russian messages only; references above to four locales and Pro demo routes describe the original template. Current routes live under `src/app/(admin)`. The locale is fixed to ru in the root layout and request config; no locale proxy is needed. Removed demos must not be reintroduced. Discounts and free items are explicitly enabled by staff, never applied implicitly. Currency is RSD, timezone Europe/Belgrade. The inventory milestone uses PostgreSQL + Prisma 7. Equipment mutations are development-only until staff authentication is implemented. Inventory readiness is separate from future reservation availability. Validate all writes with the shared Zod schema; use optimistic version checks for edits. Tariff presets must not apply free bundle rules.
