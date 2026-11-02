@@ -1,8 +1,143 @@
 import type { Metadata } from "next";
-import { setRequestLocale } from "next-intl/server";
-import SectionPage from "@/components/main/crm/section-page";
-export const metadata: Metadata = { title: "Брони | Ski Rental CRM" };
+import { getTranslations, setRequestLocale } from "next-intl/server";
+
+import PageBreadcrumb from "@/components/common/page-breadcrumb";
+import ComponentCard from "@/components/common/component-card";
+import Bookings from "@/components/main/bookings";
+import { getDb } from "@/lib/db";
+import { requireStaff } from "@/lib/require-staff";
+
+export const metadata: Metadata = {
+  title: "Бронирования | Ski Rental CRM",
+};
+
+export const dynamic = "force-dynamic";
+
+function dateOnly(value: Date) {
+  return value.toISOString().slice(0, 10);
+}
+
+async function loadData() {
+  const db = getDb();
+
+  const [customers, equipment, bookings] = await Promise.all([
+    db.customer.findMany({
+      orderBy: { name: "asc" },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+      },
+    }),
+    db.equipment.findMany({
+      where: { status: "READY" },
+      orderBy: { code: "asc" },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        size: true,
+        dailyRate: true,
+        bookingItems: {
+          where: {
+            booking: {
+              status: { in: ["RESERVED", "ISSUED"] },
+            },
+          },
+          select: {
+            booking: {
+              select: {
+                startDate: true,
+                endDate: true,
+              },
+            },
+          },
+        },
+      },
+    }),
+    db.booking.findMany({
+      take: 100,
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      select: {
+        id: true,
+        startDate: true,
+        endDate: true,
+        status: true,
+        paidDays: true,
+        total: true,
+        notes: true,
+        customer: {
+          select: {
+            name: true,
+            phone: true,
+          },
+        },
+        items: {
+          orderBy: { equipmentCode: "asc" },
+          select: {
+            id: true,
+            equipmentCode: true,
+            equipmentName: true,
+            complimentary: true,
+          },
+        },
+      },
+    }),
+  ]);
+
+  return {
+    customers,
+    equipment: equipment.map((item) => ({
+      id: item.id,
+      code: item.code,
+      name: item.name,
+      size: item.size,
+      dailyRate: item.dailyRate,
+      reservations: item.bookingItems.map(({ booking }) => ({
+        startDate: dateOnly(booking.startDate),
+        endDate: dateOnly(booking.endDate),
+      })),
+    })),
+    rows: bookings.map((booking) => ({
+      id: booking.id,
+      customerName: booking.customer.name,
+      customerPhone: booking.customer.phone,
+      startDate: dateOnly(booking.startDate),
+      endDate: dateOnly(booking.endDate),
+      status: booking.status,
+      paidDays: booking.paidDays,
+      total: booking.total,
+      notes: booking.notes,
+      items: booking.items.map((item) => ({
+        id: item.id,
+        code: item.equipmentCode,
+        name: item.equipmentName,
+        complimentary: item.complimentary,
+      })),
+    })),
+  };
+}
+
 export default async function Page() {
+  await requireStaff();
   setRequestLocale("ru");
-  return <SectionPage section="bookings" />;
+
+  const t = await getTranslations("bookings");
+  const data = await loadData().catch(() => null);
+
+  return (
+    <>
+      <PageBreadcrumb pageTitle={t("title")} />
+
+      {data ? (
+        <Bookings {...data} />
+      ) : (
+        <ComponentCard title={t("offlineTitle")}>
+          <p className="text-sm text-gray-500">
+            {t("offlineBody")}
+          </p>
+        </ComponentCard>
+      )}
+    </>
+  );
 }
