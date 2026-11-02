@@ -8,17 +8,18 @@ datasource db {
 }
 
 model Equipment {
-  id        String   @id @default(uuid()) @db.Uuid
-  code      String   @unique @db.VarChar(40)
-  name      String   @db.VarChar(120)
-  tariff    String   @db.VarChar(40)
-  size      String   @db.VarChar(40)
-  dailyRate Int
-  status    String   @default("READY") @db.VarChar(20)
-  notes     String   @default("") @db.VarChar(2000)
-  version   Int      @default(1)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String        @id @default(uuid()) @db.Uuid
+  code         String        @unique @db.VarChar(40)
+  name         String        @db.VarChar(120)
+  tariff       String        @db.VarChar(40)
+  size         String        @db.VarChar(40)
+  dailyRate    Int
+  status       String        @default("READY") @db.VarChar(20)
+  notes        String        @default("") @db.VarChar(2000)
+  version      Int           @default(1)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  bookingItems BookingItem[]
 
   @@index([status, tariff])
 }
@@ -37,6 +38,8 @@ model User {
   banExpires    DateTime?
   sessions      Session[]
   accounts      Account[]
+
+  bookings Booking[]
 
   @@unique([email])
   @@map("user")
@@ -101,6 +104,62 @@ model Customer {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  bookings Booking[]
+
   @@index([phone])
   @@index([name])
+}
+
+enum BookingStatus {
+  RESERVED
+  ISSUED
+  RETURNED
+  CANCELLED
+}
+
+model Booking {
+  id          String   @id @default(uuid()) @db.Uuid
+  customerId  String   @db.Uuid
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  startDate DateTime      @db.Date
+  endDate   DateTime      @db.Date
+  status    BookingStatus @default(RESERVED)
+
+  travelDay       Boolean @default(false)
+  discountPercent Int     @default(0)
+  paidDays        Int
+  subtotal        Int
+  discountAmount  Int
+  total           Int
+
+  notes     String   @default("") @db.VarChar(2000)
+  version   Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items BookingItem[]
+
+  @@index([customerId])
+  @@index([createdById])
+  @@index([status, startDate, endDate])
+}
+
+model BookingItem {
+  id          String    @id @default(uuid()) @db.Uuid
+  bookingId   String    @db.Uuid
+  booking     Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  equipmentId String    @db.Uuid
+  equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Restrict)
+
+  equipmentCode String  @db.VarChar(40)
+  equipmentName String  @db.VarChar(120)
+  dailyRate     Int
+  complimentary Boolean @default(false)
+  amount        Int
+
+  @@unique([bookingId, equipmentId])
+  @@index([equipmentId])
 }
