@@ -17,6 +17,8 @@ import {
   type BookingRow,
 } from "@/lib/bookings/types";
 
+import BookingCalculation from "./booking-calculation";
+
 type Props = {
   booking: BookingRow;
   onClose: () => void;
@@ -74,9 +76,7 @@ export default function BookingDetails({ booking, onClose }: Props) {
           <div className="space-y-5">
             <div className="grid gap-4 sm:grid-cols-2">
               <section className="rounded-xl border border-gray-200 p-4 dark:border-gray-700">
-                <h3 className="text-sm text-gray-500">
-                  {t("layout.period")}
-                </h3>
+                <h3 className="text-sm text-gray-500">{t("layout.period")}</h3>
                 <p className="mt-2 font-medium">
                   {formatBookingDate(booking.startDate)}
                   {" — "}
@@ -98,33 +98,11 @@ export default function BookingDetails({ booking, onClose }: Props) {
               </section>
             </div>
 
-            <section>
-              <h3 className="mb-3 font-semibold">
-                {t("layout.equipment")}
-              </h3>
-              <ul className="divide-y divide-gray-100 rounded-xl border border-gray-200 dark:divide-gray-800 dark:border-gray-700">
-                {booking.items.map((item) => (
-                  <li
-                    key={item.id}
-                    className="flex flex-wrap items-center justify-between gap-2 p-3"
-                  >
-                    <div>
-                      <p className="text-sm font-medium">{item.name}</p>
-                      <p className="text-xs text-gray-500">{item.code}</p>
-                    </div>
-                    {item.complimentary && (
-                      <span className="rounded-full bg-green-50 px-2 py-1 text-xs text-green-700 dark:bg-green-950 dark:text-green-300">
-                        {t("free")}
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </section>
+            <BookingCalculation booking={booking} />
 
             <section>
               <h3 className="font-semibold">{t("layout.note")}</h3>
-              <p className="mt-2 whitespace-pre-wrap break-words text-sm text-gray-600 dark:text-gray-400">
+              <p className="mt-2 text-sm break-words whitespace-pre-wrap text-gray-600 dark:text-gray-400">
                 {booking.notes || t("layout.noNote")}
               </p>
             </section>
@@ -151,9 +129,7 @@ export default function BookingDetails({ booking, onClose }: Props) {
                   className="mt-4 flex justify-between gap-3 text-sm"
                 >
                   <span>{t(`layout.${key}`)}</span>
-                  <span className="text-gray-500">
-                    {t("layout.unknown")}
-                  </span>
+                  <span className="text-gray-500">{t("layout.unknown")}</span>
                 </div>
               ))}
             </div>
