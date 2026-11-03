@@ -67,6 +67,10 @@ async function loadRows(today: string): Promise<BookingRow[]> {
     endDate: booking.endDate.toISOString().slice(0, 10),
     status: booking.status,
     paidDays: booking.paidDays,
+    travelDay: booking.travelDay,
+    discountPercent: booking.discountPercent,
+    subtotal: booking.subtotal,
+    discountAmount: booking.discountAmount,
     total: booking.total,
     notes: booking.notes,
     items: booking.items.map((item) => ({

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
-
+import RentalDatePicker from "@/components/ui/rental-date-picker";
 import { useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -210,20 +210,38 @@ export default function BookingForm({
             <div className="grid gap-4 sm:grid-cols-2">
               <Field controlId="booking-start">
                 <FieldLabel>{t("startDate")}</FieldLabel>
-                <Input
-                  {...register("startDate")}
-                  type="date"
-                  aria-invalid={!!errors.startDate}
+                <RentalDatePicker
+                  id="booking-start"
+                  label={t("startDate")}
+                  value={startDate}
+                  disabled={isSubmitting}
+                  invalid={!!errors.startDate}
+                  onChange={(value) =>
+                    setValue("startDate", value, {
+                      shouldDirty: true,
+                      shouldTouch: true,
+                      shouldValidate: true,
+                    })
+                  }
                 />
               </Field>
 
               <Field controlId="booking-end">
                 <FieldLabel>{t("endDate")}</FieldLabel>
-                <Input
-                  {...register("endDate")}
-                  type="date"
+                <RentalDatePicker
+                  id="booking-end"
+                  label={t("endDate")}
+                  value={endDate}
                   min={startDate || undefined}
-                  aria-invalid={!!errors.endDate}
+                  disabled={isSubmitting}
+                  invalid={!!errors.endDate}
+                  onChange={(value) =>
+                    setValue("endDate", value, {
+                      shouldDirty: true,
+                      shouldTouch: true,
+                      shouldValidate: true,
+                    })
+                  }
                 />
               </Field>
             </div>

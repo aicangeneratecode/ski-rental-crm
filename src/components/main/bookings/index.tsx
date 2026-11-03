@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 
-import { Button } from "@/components/ui/button";
+import RentalDatePicker from "@/components/ui/rental-date-picker";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
 import { Input } from "@/components/ui/input";
 import {
   formatBookingDate,
@@ -46,6 +48,7 @@ const statusClasses: Record<BookingRow["status"], string> = {
 
 export default function Bookings({ rows, customers, equipment }: Props) {
   const t = useTranslations("bookings");
+  const calendarT = useTranslations("calendar");
   const [open, setOpen] = useState(false);
   const [saved, setSaved] = useState(false);
   const [query, setQuery] = useState("");
@@ -90,6 +93,12 @@ export default function Bookings({ rows, customers, equipment }: Props) {
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {t("description")}
         </p>
+        <Link
+            href="/calendar"
+            className={buttonVariants({ variant: "outline" })}
+            >
+            {calendarT("title")}
+        </Link>
         <Button
           disabled={!canCreate}
           onClick={() => {
@@ -155,12 +164,12 @@ export default function Bookings({ rows, customers, equipment }: Props) {
             >
               {t("layout.from")}
             </label>
-            <Input
-              id="booking-filter-from"
-              type="date"
-              value={from}
-              aria-invalid={invalidDates}
-              onChange={(event) => setFrom(event.target.value)}
+            <RentalDatePicker
+                id="booking-filter-from"
+                label={t("layout.from")}
+                value={from}
+                invalid={invalidDates}
+                onChange={setFrom}
             />
           </div>
 
@@ -171,14 +180,14 @@ export default function Bookings({ rows, customers, equipment }: Props) {
             >
               {t("layout.to")}
             </label>
-            <Input
-              id="booking-filter-to"
-              type="date"
-              value={to}
-              min={from || undefined}
-              aria-invalid={invalidDates}
-              onChange={(event) => setTo(event.target.value)}
-            />
+            <RentalDatePicker
+                id="booking-filter-to"
+                label={t("layout.to")}
+                value={to}
+                min={from || undefined}
+                invalid={invalidDates}
+                onChange={setTo}
+                />
           </div>
         </div>
 

@@ -27,11 +27,17 @@ export type BookingCustomer = {
     paidDays: number;
     total: number;
     notes: string;
+    travelDay: boolean;
+    discountPercent: number;
+    subtotal: number;
+    discountAmount: number;
     items: {
       id: string;
       code: string;
       name: string;
       complimentary: boolean;
+      dailyRate: number;
+      amount: number;
     }[];
   };
   

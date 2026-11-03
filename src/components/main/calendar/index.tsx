@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import BookingDetails from "@/components/main/bookings/booking-details";
 import { formatBookingDate } from "@/lib/bookings/types";
 import type { CalendarEquipment } from "@/lib/bookings/calendar-types";
+import RentalDatePicker from "@/components/ui/rental-date-picker";
 
 const DAY_MS = 86_400_000;
 const gridStyle = {
@@ -155,25 +156,20 @@ export default function RentalCalendar({ equipment, today }: Props) {
             aria-label={t("search")}
           />
 
-          <label className="flex items-center gap-3 text-sm">
-            <span className="shrink-0">{live("date")}</span>
-            <Input
-              type="date"
+          <div className="space-y-1">
+            <label htmlFor="calendar-jump" className="text-sm">
+              {live("date")}
+            </label>
+            <RentalDatePicker
+              id="calendar-jump"
+              label={live("date")}
               value={weekStart}
-              min="2000-01-01"
-              max="2100-12-31"
-              onChange={(event) => {
-                const value = event.target.value;
-                if (
-                  /^\d{4}-\d{2}-\d{2}$/.test(value) &&
-                  value >= "2000-01-01" &&
-                  value <= "2100-12-31"
-                ) {
-                  setWeekStart(weekOf(value));
-                }
+              clearable={false}
+              onChange={(value) => {
+                if (value) setWeekStart(weekOf(value));
               }}
             />
-          </label>
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-3 text-xs">
