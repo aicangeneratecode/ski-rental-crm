@@ -14,6 +14,11 @@ export const navItems: NavItem[] = [
     icon: <CalendarIcon className="size-6" />,
   },
   {
+    key: "calendar",
+    path: "/calendar",
+    icon: <CalendarIcon className="size-6" />,
+  },
+  {
     key: "equipment",
     path: "/equipment",
     icon: <BoxIcon className="size-6" />,

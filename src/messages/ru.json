@@ -283,6 +283,7 @@
     "items": {
       "today": "Сегодня",
       "bookings": "Брони",
+      "calendar": "Занятость",
       "equipment": "Оборудование",
       "customers": "Клиенты",
       "settings": "Настройки"

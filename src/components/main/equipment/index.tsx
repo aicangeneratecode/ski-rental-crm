@@ -21,7 +21,6 @@ export default function EquipmentCatalog({
   const t = useTranslations("inventory");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 const selectedItem = rows.find((row) => row.id === selectedId);
-  const [details, setDetails] = useState<EquipmentRow | null>(null);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [status, setStatus] = useState("active");
