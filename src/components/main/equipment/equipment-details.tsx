@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 
+import { formatBookingDate } from "@/lib/bookings/types";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -31,6 +32,8 @@ export default function EquipmentDetails({
 }: Props) {
   const t = useTranslations("equipmentProfile");
   const inventory = useTranslations("inventory");
+  const bookingsT = useTranslations("bookings");
+
   const [tab, setTab] = useState<(typeof tabs)[number]>("overview");
 
   const statusColor =
@@ -117,44 +120,103 @@ export default function EquipmentDetails({
         )}
 
         {tab === "availability" && (
-          <section className="space-y-3">
-            <h3 className="font-semibold">{t("availabilityTitle")}</h3>
-            <p className="text-sm leading-6 text-gray-500">
-              {t("availabilityHint")}
-            </p>
+            <section className="space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="font-semibold">{t("availabilityTitle")}</h3>
+                <span className="text-xs text-gray-500">
+                    {t("bookingCount", { count: item.bookings.length })}
+                </span>
+                </div>
 
-            <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
-              <table className="w-full min-w-[420px] text-sm">
-                <thead className="bg-gray-50 dark:bg-gray-800">
-                  <tr>
-                    {(["period", "customer", "bookingStatus"] as const).map(
-                      (key) => (
-                        <th
-                          key={key}
-                          scope="col"
-                          className="px-4 py-3 text-start font-medium"
+                <p className="text-sm leading-6 text-gray-500">
+                {t("availabilityHint")}
+                </p>
+
+                {item.status !== "READY" && (
+                <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                    {t("notReady")}
+                </p>
+                )}
+
+                <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
+                <table className="w-full min-w-[520px] text-sm">
+                    <thead className="bg-gray-50 dark:bg-gray-800">
+                    <tr>
+                        {(["period", "customer", "bookingStatus"] as const).map(
+                        (key) => (
+                            <th
+                            key={key}
+                            scope="col"
+                            className="px-4 py-3 text-start font-medium"
+                            >
+                            {t(key)}
+                            </th>
+                        ),
+                        )}
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    {item.bookings.map((booking) => (
+                        <tr
+                        key={booking.id}
+                        className="border-t border-gray-100 dark:border-gray-800"
                         >
-                          {t(key)}
-                        </th>
-                      ),
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td
-                      colSpan={3}
-                      className="px-5 py-10 text-center text-gray-500"
-                    >
-                      {t("availabilityPlaceholder")}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
+                        <td className="px-4 py-4 align-top whitespace-nowrap">
+                            <p>{formatBookingDate(booking.startDate)}</p>
+                            <p className="mt-1 text-gray-500">
+                            {formatBookingDate(booking.endDate)}
+                            </p>
+                            <p className="mt-2 text-xs text-gray-500">
+                            {bookingsT("reference", {
+                                id: booking.id.slice(0, 8),
+                            })}
+                            </p>
+                        </td>
 
+                        <td className="px-4 py-4 align-top">
+                            <p className="font-medium">{booking.customerName}</p>
+                            <a
+                            href={`tel:${booking.customerPhone}`}
+                            className="mt-1 inline-block text-xs text-brand-600 hover:underline dark:text-brand-400"
+                            >
+                            {booking.customerPhone}
+                            </a>
+                        </td>
+
+                        <td className="px-4 py-4 align-top">
+                            <span
+                            className={`inline-block rounded-full px-2.5 py-1 text-xs whitespace-nowrap ${
+                                booking.status === "ISSUED"
+                                ? "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+                                : "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                            }`}
+                            >
+                            {bookingsT(`statuses.${booking.status}`)}
+                            </span>
+                        </td>
+                        </tr>
+                    ))}
+
+                    {item.bookings.length === 0 && (
+                        <tr>
+                        <td
+                            colSpan={3}
+                            className="px-5 py-10 text-center text-gray-500"
+                        >
+                            {t("availabilityEmpty")}
+                        </td>
+                        </tr>
+                    )}
+                    </tbody>
+                </table>
+                </div>
+
+                <p className="text-xs leading-5 text-gray-500">
+                {t("availabilityFooter")}
+                </p>
+            </section>
+            )}
         {tab === "maintenance" && (
           <section className="space-y-4">
             <div>

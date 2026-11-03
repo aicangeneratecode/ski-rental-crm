@@ -20,12 +20,60 @@ export default async function Page() {
   else {
     try {
       const records = await getDb().equipment.findMany({
-        orderBy: { createdAt: "desc" },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        include: {
+          bookingItems: {
+            where: {
+              booking: {
+                status: { in: ["RESERVED", "ISSUED"] },
+              },
+            },
+            select: {
+              booking: {
+                select: {
+                  id: true,
+                  startDate: true,
+                  endDate: true,
+                  status: true,
+                  customer: {
+                    select: {
+                      name: true,
+                      phone: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       });
       rows = records.map((record) => ({
         ...equipmentSchema.parse(record),
         id: record.id,
         version: record.version,
+        bookings: record.bookingItems
+          .map(({ booking }) => {
+            if (
+              booking.status !== "RESERVED" &&
+              booking.status !== "ISSUED"
+            ) {
+              throw new Error("INVALID_ACTIVE_BOOKING_STATUS");
+            }
+      
+            return {
+              id: booking.id,
+              startDate: booking.startDate.toISOString().slice(0, 10),
+              endDate: booking.endDate.toISOString().slice(0, 10),
+              status: booking.status,
+              customerName: booking.customer.name,
+              customerPhone: booking.customer.phone,
+            };
+          })
+          .sort(
+            (a, b) =>
+              a.startDate.localeCompare(b.startDate) ||
+              a.id.localeCompare(b.id),
+          ),
       }));
     } catch {
       problem = "offline";

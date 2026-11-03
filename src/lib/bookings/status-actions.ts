@@ -163,7 +163,9 @@ export async function changeBookingStatus(
   }
 
   revalidatePath("/bookings");
-  revalidatePath("/");
+  revalidatePath("/customers");
+  revalidatePath("/equipment");
   revalidatePath("/calendar");
+  revalidatePath("/");
   return { ok: true };
 }
