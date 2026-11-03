@@ -116,6 +116,8 @@ async function loadEquipment(): Promise<CalendarEquipment[]> {
           code: entry.equipmentCode,
           name: entry.equipmentName,
           complimentary: entry.complimentary,
+          dailyRate: entry.dailyRate,
+          amount: entry.amount,
         })),
       })),
     };
