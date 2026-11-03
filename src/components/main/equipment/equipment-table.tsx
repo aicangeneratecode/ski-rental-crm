@@ -15,14 +15,17 @@ import type { EquipmentRow } from "@/lib/equipment/types";
 interface EquipmentTableProps {
   rows: EquipmentRow[];
   onEdit: (item: EquipmentRow) => void;
+  onView: (item: EquipmentRow) => void;
   readOnly: boolean;
 }
 export default function EquipmentTable({
   rows,
   onEdit,
+  onView,
   readOnly,
 }: EquipmentTableProps) {
   const t = useTranslations("inventory");
+  const profileT = useTranslations("equipmentProfile");
   const columns = useMemo<ColumnDef<Record<string, never>, EquipmentRow>[]>(
     () => [
       { accessorKey: "code", header: t("fields.code") },
@@ -57,19 +60,32 @@ export default function EquipmentTable({
         id: "actions",
         header: t("actions"),
         cell: (info) => (
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={readOnly}
-            onClick={() => onEdit(info.row.original)}
-            aria-label={`${t("edit")} ${info.row.original.code}`}
-          >
-            {t("edit")}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => onView(info.row.original)}
+              aria-label={`${profileT("open")} ${info.row.original.code}`}
+            >
+              {profileT("open")}
+            </Button>
+      
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={readOnly}
+              onClick={() => onEdit(info.row.original)}
+              aria-label={`${t("edit")} ${info.row.original.code}`}
+            >
+              {t("edit")}
+            </Button>
+          </div>
         ),
       },
     ],
-    [t, onEdit, readOnly],
+    [t, profileT, onEdit, onView, readOnly],
   );
   const table = useTable({
     features: {},

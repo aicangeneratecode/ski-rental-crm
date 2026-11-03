@@ -8,6 +8,7 @@ import { categories, statuses, getTariff } from "@/lib/equipment/tariffs";
 import type { EquipmentRow } from "@/lib/equipment/types";
 import EquipmentForm from "./equipment-form";
 import EquipmentTable from "./equipment-table";
+import EquipmentDetails from "./equipment-details";
 import SelectField from "./select-field";
 interface EquipmentCatalogProps {
   rows: EquipmentRow[];
@@ -18,6 +19,9 @@ export default function EquipmentCatalog({
   readOnly,
 }: EquipmentCatalogProps) {
   const t = useTranslations("inventory");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+const selectedItem = rows.find((row) => row.id === selectedId);
+  const [details, setDetails] = useState<EquipmentRow | null>(null);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [status, setStatus] = useState("active");
@@ -116,13 +120,14 @@ export default function EquipmentCatalog({
         </div>
         {visible.length ? (
           <EquipmentTable
-            rows={visible}
-            onEdit={(item) => {
-              setSaved(false);
-              setEditing(item);
-            }}
-            readOnly={readOnly}
-          />
+          rows={visible}
+          onView={(item) => setSelectedId(item.id)}
+          onEdit={(item) => {
+            setSaved(false);
+            setEditing(item);
+          }}
+          readOnly={readOnly}
+        />
         ) : (
           <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
             <BoxIcon className="size-10 text-gray-400" />
@@ -150,6 +155,20 @@ export default function EquipmentCatalog({
           {t("shown", { count: visible.length, total: rows.length })}
         </p>
       </section>
+      {selectedItem && (
+        <EquipmentDetails
+          key={selectedItem.id}
+          item={selectedItem}
+          readOnly={readOnly}
+          onClose={() => setSelectedId(null)}
+          onEdit={() => {
+            if (readOnly) return;
+            setSaved(false);
+            setEditing(selectedItem);
+            setSelectedId(null);
+          }}
+        />
+      )}
       {editing && (
         <EquipmentForm
           key={editing === "new" ? "new" : `${editing.id}-${editing.version}`}
