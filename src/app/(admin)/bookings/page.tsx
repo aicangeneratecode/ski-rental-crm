@@ -125,6 +125,8 @@ async function loadData() {
         code: item.equipmentCode,
         name: item.equipmentName,
         complimentary: item.complimentary,
+        dailyRate: item.dailyRate,
+        amount: item.amount,
       })),
     })),
   };
@@ -145,9 +147,7 @@ export default async function Page() {
         <Bookings {...data} />
       ) : (
         <ComponentCard title={t("offlineTitle")}>
-          <p className="text-sm text-gray-500">
-            {t("offlineBody")}
-          </p>
+          <p className="text-sm text-gray-500">{t("offlineBody")}</p>
         </ComponentCard>
       )}
     </>
