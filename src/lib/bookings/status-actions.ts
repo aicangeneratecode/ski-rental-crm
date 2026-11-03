@@ -164,6 +164,6 @@ export async function changeBookingStatus(
 
   revalidatePath("/bookings");
   revalidatePath("/");
-
+  revalidatePath("/calendar");
   return { ok: true };
 }
