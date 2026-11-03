@@ -44,6 +44,6 @@ export async function createBooking(
   }
 
   revalidatePath("/bookings");
-
+  revalidatePath("/");
   return { ok: true, id };
 }
