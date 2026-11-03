@@ -38,6 +38,10 @@ async function loadRows(today: string): Promise<BookingRow[]> {
       endDate: true,
       status: true,
       paidDays: true,
+      travelDay: true,
+      discountPercent: true,
+      subtotal: true,
+      discountAmount: true,
       total: true,
       notes: true,
       customer: {
@@ -53,6 +57,8 @@ async function loadRows(today: string): Promise<BookingRow[]> {
           equipmentCode: true,
           equipmentName: true,
           complimentary: true,
+          dailyRate: true,
+          amount: true,
         },
       },
     },
@@ -78,6 +84,8 @@ async function loadRows(today: string): Promise<BookingRow[]> {
       code: item.equipmentCode,
       name: item.equipmentName,
       complimentary: item.complimentary,
+      dailyRate: item.dailyRate,
+      amount: item.amount,
     })),
   }));
 }
