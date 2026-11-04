@@ -7,9 +7,8 @@ export const customerSchema = z.object({
     .string()
     .trim()
     .max(40)
-    .regex(/^\+[1-9][0-9 ()-]*$/)
-    .transform((value) => value.replace(/[ ()-]/g, ""))
-    .pipe(z.string().regex(/^\+[1-9]\d{7,14}$/)),
+.transform((value) => value.replace(/[ ()-]/g, ""))
+    .refine((value) => value === "" || /^\+[1-9]\d{7,14}$/.test(value)),
 
   email: z
     .string()
