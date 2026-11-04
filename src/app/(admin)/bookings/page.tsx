@@ -71,6 +71,12 @@ async function loadData() {
         discountAmount: true,
         total: true,
         notes: true,
+        payments: {
+          select: {
+            kind: true,
+            amount: true,
+          },
+        },
         customer: {
           select: {
             name: true,
@@ -120,6 +126,14 @@ async function loadData() {
       discountAmount: booking.discountAmount,
       total: booking.total,
       notes: booking.notes,
+      netPaid: booking.payments.reduce(
+        (sum, payment) =>
+          sum +
+          (payment.kind === "PAYMENT"
+            ? payment.amount
+            : -payment.amount),
+        0,
+      ),
       items: booking.items.map((item) => ({
         id: item.id,
         code: item.equipmentCode,

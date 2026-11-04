@@ -19,8 +19,12 @@ import BookingActions from "./booking-actions";
 import BookingDetails from "./booking-details";
 import BookingForm from "./booking-form";
 
+type BookingListRow = BookingRow & {
+  netPaid: number;
+};
+
 type Props = {
-  rows: BookingRow[];
+  rows: BookingListRow[];
   customers: BookingCustomer[];
   equipment: BookingEquipment[];
 };
@@ -56,6 +60,8 @@ export default function Bookings({ rows, customers, equipment }: Props) {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const paymentT = useTranslations("bookingPaymentList");
+  const [onlyBalance, setOnlyBalance] = useState(false);
 
   const canCreate = customers.length > 0 && equipment.length > 0;
   const selected = rows.find((row) => row.id === selectedId);
@@ -64,6 +70,12 @@ export default function Bookings({ rows, customers, equipment }: Props) {
 
   const visible = rows.filter((row) => {
     if (invalidDates) return false;
+    if (
+      onlyBalance &&
+      (row.status === "CANCELLED" || row.netPaid >= row.total)
+    ) {
+      return false;
+    }
     if (status !== "all" && row.status !== status) return false;
     if (from && row.endDate < from) return false;
     if (to && row.startDate > to) return false;
@@ -85,10 +97,20 @@ export default function Bookings({ rows, customers, equipment }: Props) {
     setStatus("all");
     setFrom("");
     setTo("");
+    setOnlyBalance(false);
   }
 
   return (
     <div className="space-y-5 text-gray-900 dark:text-gray-100">
+        <Button
+          type="button"
+          size="sm"
+          variant={onlyBalance ? "default" : "outline"}
+          aria-pressed={onlyBalance}
+          onClick={() => setOnlyBalance((value) => !value)}
+        >
+          {paymentT("onlyBalance")}
+        </Button>
       <header className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {t("description")}
@@ -271,6 +293,29 @@ export default function Bookings({ rows, customers, equipment }: Props) {
                   <p className="font-semibold">
                     {formatBookingMoney(row.total)}
                   </p>
+                  <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                    {paymentT("paid", {
+                      amount: formatBookingMoney(row.netPaid),
+                    })}
+                  </p>
+
+                  {row.status === "CANCELLED" ? (
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      {paymentT("cancelled")}
+                    </p>
+                  ) : row.netPaid >= row.total ? (
+                    <p className="mt-1 text-xs font-medium text-green-700 dark:text-green-400">
+                      {paymentT("settled")}
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-400">
+                      {paymentT("remaining", {
+                        amount: formatBookingMoney(
+                          Math.max(0, row.total - row.netPaid),
+                        ),
+                      })}
+                    </p>
+                  )}
                   <Button
                     type="button"
                     size="sm"
