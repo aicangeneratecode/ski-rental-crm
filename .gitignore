@@ -45,3 +45,9 @@ next-env.d.ts
 /src/generated/prisma/
 /.prisma/
 !.env.example
+
+# Client exports contain private personal data. Never commit import files.
+/imports/
+/topride_import_clean_*.json
+/exported_clients_*.csv
+/exported_inventories_*.csv
