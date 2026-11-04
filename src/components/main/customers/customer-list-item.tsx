@@ -83,11 +83,11 @@ export default function CustomerListItem({ customer, onOpen, onEdit }: CustomerL
             <p className={`truncate text-sm font-bold tabular-nums ${customer.dueBalance > 0
               ? "text-red-600 dark:text-red-400"
               : "text-amber-700 dark:text-amber-400"}`}>
-              {customer.dueBalance > 0 ? w("debt") : w("balance")}: {formatBookingMoney(customer.balance)}
+              {customer.dueBalance > 0 ? w("debt") : w("balance")}: {formatBookingMoney(customer.dueBalance > 0 ? customer.dueBalance : customer.balance)}
             </p>
             {customer.dueBalance > 0 && customer.dueBalance < customer.balance && (
               <p className="mt-1 truncate text-[11px] text-gray-500 dark:text-gray-400">
-                {w("dueNow", { amount: formatBookingMoney(customer.dueBalance) })}
+                {w("overallBalance", { amount: formatBookingMoney(customer.balance) })}
               </p>
             )}
           </div>
