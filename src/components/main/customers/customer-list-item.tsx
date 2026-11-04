@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
+import DeleteRecordButton from "@/components/common/delete-record-button";
 import { Popover, PopoverClose, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { VerticalDotsIcon } from "@/icons";
 import { formatBookingMoney } from "@/lib/bookings/types";
@@ -39,7 +39,7 @@ export default function CustomerListItem({ customer, onOpen, onEdit }: CustomerL
   const w = useTranslations("customersWorkspace");
 
   return (
-    <article className="grid min-w-0 gap-0 overflow-visible rounded-2xl border border-gray-200 bg-white shadow-theme-xs transition-colors hover:border-brand-200 dark:border-gray-800 dark:bg-[#1b1e21] dark:hover:border-brand-800 md:grid-cols-[minmax(230px,1.5fr)_minmax(180px,1.1fr)_minmax(150px,0.85fr)_54px]">
+    <article className="grid min-w-0 gap-0 overflow-visible rounded-2xl border border-gray-200 bg-white shadow-theme-xs transition-colors hover:border-brand-200 dark:border-gray-800 dark:bg-[#1b1e21] dark:hover:border-brand-800 md:grid-cols-[minmax(230px,1.5fr)_minmax(180px,1.1fr)_minmax(150px,0.85fr)_100px]">
       <button type="button" onClick={onOpen} aria-label={w("openCustomer", { name: customer.name })}
         className="flex min-w-0 items-center gap-3 px-4 py-3 text-start focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500">
         <span aria-hidden="true" className={`flex size-11 shrink-0 items-center justify-center rounded-xl text-xs font-extrabold tracking-tight ${avatarTone(customer.id)}`}>
@@ -97,6 +97,7 @@ export default function CustomerListItem({ customer, onOpen, onEdit }: CustomerL
       </div>
 
       <div className="relative flex items-center justify-end border-t border-gray-100 px-3 py-2 md:border-s md:border-t-0 dark:border-gray-800">
+        <DeleteRecordButton kind="customer" id={customer.id} version={customer.version} label={customer.name} />
         <Popover>
           <PopoverTrigger
             type="button"
