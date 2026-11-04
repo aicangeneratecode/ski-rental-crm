@@ -25,6 +25,8 @@ jobs:
         run: npm run lint
       - name: Unit tests
         run: npm test
+      - name: Verify import preview without database writes
+        run: npm run import:legacy -- --file scripts/fixtures/legacy-import-demo.json --validate-only
       - name: Build
         run: npm run build
         env:
