@@ -1,0 +1,33 @@
+{
+  "format": "topride-legacy-import-v1",
+  "sourceDate": "test-only",
+  "customers": [
+    {
+      "sourceRow": 2,
+      "name": "Test Customer",
+      "phone": "",
+      "email": "",
+      "notes": ""
+    }
+  ],
+  "equipment": [
+    {
+      "sourceRow": 2,
+      "name": "Test Ski 160",
+      "category": "Ski Premium",
+      "tariff": "ski-premium",
+      "size": "160 см",
+      "dailyRate": 2000,
+      "notes": ""
+    },
+    {
+      "sourceRow": 3,
+      "name": "Unclassified test item",
+      "category": "",
+      "tariff": null,
+      "size": "Не указан",
+      "dailyRate": null,
+      "notes": ""
+    }
+  ]
+}
