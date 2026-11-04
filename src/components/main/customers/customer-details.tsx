@@ -97,7 +97,9 @@ export default function CustomerDetails({ customer, onClose, onEdit }: Props) {
                 <div className="min-w-0">
                   <dt className="text-xs text-gray-500">{t("phone")}</dt>
                   <dd className="mt-1 break-all text-sm">
-                    <a href={`tel:${customer.phone}`} className="text-brand-700 hover:underline dark:text-brand-400">{customer.phone}</a>
+                    {customer.phone ? (
+                      <a href={`tel:${customer.phone}`} className="text-brand-700 hover:underline dark:text-brand-400">{customer.phone}</a>
+                    ) : t("notSpecified")}
                   </dd>
                 </div>
                 <div className="min-w-0">
