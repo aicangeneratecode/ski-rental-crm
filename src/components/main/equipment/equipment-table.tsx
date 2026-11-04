@@ -10,6 +10,7 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import DeleteRecordButton from "@/components/common/delete-record-button";
 import { formatRsd } from "@/lib/equipment/tariffs";
 import type { EquipmentRow } from "@/lib/equipment/types";
 interface EquipmentTableProps {
@@ -81,6 +82,13 @@ export default function EquipmentTable({
             >
               {t("edit")}
             </Button>
+            <DeleteRecordButton
+              kind="equipment"
+              id={info.row.original.id}
+              version={info.row.original.version}
+              label={`${info.row.original.code} · ${info.row.original.name}`}
+              disabled={readOnly}
+            />
           </div>
         ),
       },
