@@ -25,3 +25,9 @@ jobs:
         run: npm run lint
       - name: Unit tests
         run: npm test
+      - name: Build
+        run: npm run build
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/test
+          BETTER_AUTH_URL: http://localhost:3000
+          BETTER_AUTH_SECRET: ci-only-please-replace-in-production-123456
