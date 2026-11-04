@@ -91,7 +91,7 @@ export default function TodayDashboard({ rows, today }: Props) {
   }
 
   return (
-    <div className="space-y-5 text-gray-900 dark:text-gray-100">
+    <div className="space-y-7 text-gray-900 dark:text-gray-100">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-sm text-gray-500">
@@ -125,10 +125,10 @@ export default function TodayDashboard({ rows, today }: Props) {
             type="button"
             aria-pressed={filter === kind}
             onClick={() => setFilter(kind)}
-            className={`rounded-2xl border bg-white p-5 text-start transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 dark:bg-gray-900 ${
+            className={`rounded-2xl border bg-white p-5 text-start transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 dark:bg-[#1b1e21] ${
               filter === kind
                 ? "border-brand-500 ring-1 ring-brand-500"
-                : "border-gray-200 dark:border-gray-800"
+                : "border-[#e9e6e1] dark:border-[#313337]"
             }`}
           >
             <span className="block text-sm text-gray-500">
@@ -177,7 +177,7 @@ export default function TodayDashboard({ rows, today }: Props) {
           {visible.map(({ row, kind }) => (
             <article
               key={row.id}
-              className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900"
+              className="rounded-2xl border border-[#e9e6e1] bg-white p-5 shadow-theme-xs dark:border-[#313337] dark:bg-[#1b1e21]"
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0">
