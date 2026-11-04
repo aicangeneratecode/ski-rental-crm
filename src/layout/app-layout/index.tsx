@@ -16,7 +16,7 @@ export default function AdminLayout({
       <SidebarInset>
         <AppHeader />
 
-        <div className="mx-auto w-full max-w-(--breakpoint-2xl) p-4 md:p-6">
+        <div className="topride-shell mx-auto">
           {children}
         </div>
       </SidebarInset>
