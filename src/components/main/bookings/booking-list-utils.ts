@@ -59,8 +59,12 @@ export function filterRentals(rows: RentalRow[], filters: RentalFilters, today: 
     if (!query) return true;
     const searchable = normalize([row.id, row.customerName, row.customerPhone, row.notes,
       ...row.items.flatMap((item) => [item.name, item.code])].join(" "));
+    const savedPhone = row.customerPhone.replace(/\D/g, "");
+    const phoneVariants = savedPhone.startsWith("381")
+      ? [savedPhone, "0" + savedPhone.slice(3)]
+      : [savedPhone];
     return searchable.includes(query) ||
-      (phoneDigits.length >= 3 && row.customerPhone.replace(/\D/g, "").includes(phoneDigits));
+      (phoneDigits.length >= 3 && phoneVariants.some((phone) => phone.includes(phoneDigits)));
   });
   return filtered.sort((a, b) => {
     let comparison = 0;
