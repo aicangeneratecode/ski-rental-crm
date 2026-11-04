@@ -142,7 +142,7 @@ export default function Customers({ rows }: CustomersProps) {
 
       {visible.length > 0 ? (
         <section aria-label={w("listLabel")}>
-          <div className="mb-2 hidden grid-cols-[minmax(230px,1.5fr)_minmax(180px,1.1fr)_minmax(150px,0.85fr)_54px] px-4 text-[11px] font-bold uppercase tracking-[0.11em] text-gray-400 md:grid">
+          <div className="mb-2 hidden grid-cols-[minmax(230px,1.5fr)_minmax(180px,1.1fr)_minmax(150px,0.85fr)_100px] px-4 text-[11px] font-bold uppercase tracking-[0.11em] text-gray-400 md:grid">
             <span>{w("columns.client")}</span>
             <span className="ps-4">{w("columns.contacts")}</span>
             <span className="ps-4">{w("columns.balance")}</span>
