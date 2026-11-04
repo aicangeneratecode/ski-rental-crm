@@ -12,7 +12,8 @@
     "db:setup": "prisma migrate deploy",
     "db:local": "prisma dev --name ski-rental",
     "test": "node --import tsx --test src/lib/equipment/schema.test.ts src/lib/bookings/pricing.test.ts src/lib/payments/schema.test.ts src/components/main/bookings/booking-list-utils.test.ts src/components/main/calendar/calendar-utils.test.ts src/lib/customers/list-utils.test.ts",
-    "test:db": "node --import tsx --test src/lib/equipment/repository.test.ts"
+    "test:db": "node --import tsx --test src/lib/equipment/repository.test.ts",
+    "import:legacy": "node --import tsx scripts/import-legacy-data.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
