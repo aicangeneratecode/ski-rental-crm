@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
-import PageBreadcrumb from "@/components/common/page-breadcrumb";
 import ComponentCard from "@/components/common/component-card";
 import Bookings from "@/components/main/bookings";
 import { getDb } from "@/lib/db";
 import { requireStaff } from "@/lib/require-staff";
+import { getBelgradeDate } from "@/lib/bookings/today";
 
 export const metadata: Metadata = {
-  title: "Бронирования | Ski Rental CRM",
+  title: "Аренды | TOP RIDE",
 };
 
 export const dynamic = "force-dynamic";
@@ -56,11 +56,11 @@ async function loadData() {
       },
     }),
     db.booking.findMany({
-      take: 100,
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       select: {
         id: true,
         version: true,
+        createdAt: true,
         startDate: true,
         endDate: true,
         status: true,
@@ -114,6 +114,7 @@ async function loadData() {
     rows: bookings.map((booking) => ({
       id: booking.id,
       version: booking.version,
+      createdAt: booking.createdAt.toISOString(),
       customerName: booking.customer.name,
       customerPhone: booking.customer.phone,
       startDate: dateOnly(booking.startDate),
@@ -155,10 +156,8 @@ export default async function Page() {
 
   return (
     <>
-      <PageBreadcrumb pageTitle={t("title")} />
-
       {data ? (
-        <Bookings {...data} />
+        <Bookings {...data} today={getBelgradeDate()} />
       ) : (
         <ComponentCard title={t("offlineTitle")}>
           <p className="text-sm text-gray-500">{t("offlineBody")}</p>
