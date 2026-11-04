@@ -18,6 +18,7 @@ import {
 } from "@/lib/bookings/types";
 
 import BookingCalculation from "./booking-calculation";
+import BookingPayments from "./booking-payments";
 
 type Props = {
   booking: BookingRow;
@@ -110,34 +111,7 @@ export default function BookingDetails({ booking, onClose }: Props) {
         )}
 
         {tab === "payment" && (
-          <section className="space-y-4">
-            <div>
-              <h3 className="font-semibold">{t("layout.paymentTitle")}</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                {t("layout.paymentHint")}
-              </p>
-            </div>
-
-            <div className="rounded-xl bg-gray-50 p-4 dark:bg-gray-800">
-              <div className="flex justify-between gap-3 font-semibold">
-                <span>{t("total")}</span>
-                <span>{formatBookingMoney(booking.total)}</span>
-              </div>
-              {(["paid", "balance", "deposit"] as const).map((key) => (
-                <div
-                  key={key}
-                  className="mt-4 flex justify-between gap-3 text-sm"
-                >
-                  <span>{t(`layout.${key}`)}</span>
-                  <span className="text-gray-500">{t("layout.unknown")}</span>
-                </div>
-              ))}
-            </div>
-
-            <Button type="button" disabled>
-              {t("layout.acceptPayment")}
-            </Button>
-          </section>
+          <BookingPayments key={booking.id} bookingId={booking.id} />
         )}
 
         {tab === "history" && (
