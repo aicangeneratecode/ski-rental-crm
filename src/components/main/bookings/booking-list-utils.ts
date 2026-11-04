@@ -62,7 +62,9 @@ export function filterRentals(rows: RentalRow[], filters: RentalFilters, today: 
     const savedPhone = row.customerPhone.replace(/\D/g, "");
     const phoneVariants = savedPhone.startsWith("381")
       ? [savedPhone, "0" + savedPhone.slice(3)]
-      : [savedPhone];
+      : savedPhone.startsWith("0")
+        ? [savedPhone, "381" + savedPhone.slice(1)]
+        : [savedPhone];
     return searchable.includes(query) ||
       (phoneDigits.length >= 3 && phoneVariants.some((phone) => phone.includes(phoneDigits)));
   });
@@ -77,7 +79,13 @@ export function filterRentals(rows: RentalRow[], filters: RentalFilters, today: 
       case "nameAsc": comparison = compareString(a.customerName, b.customerName); break;
       case "amountDesc": comparison = b.total - a.total; break;
       case "balanceDesc": comparison = rentalBalance(b) - rentalBalance(a); break;
-      default: comparison = rentalPriority(a, today) - rentalPriority(b, today);
+      default: {
+        const priorityA = rentalPriority(a, today);
+        comparison = priorityA - rentalPriority(b, today);
+        if (comparison === 0 && priorityA === 0) comparison = compareString(a.endDate, b.endDate);
+        if (comparison === 0 && priorityA === 1) comparison = compareString(a.startDate, b.startDate);
+        break;
+      }
     }
     return comparison || compareString(b.createdAt, a.createdAt) || compareString(a.id, b.id);
   });
