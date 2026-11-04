@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import DeleteRecordButton from "@/components/common/delete-record-button";
 import { getTodayKind } from "@/lib/bookings/today";
 import { formatBookingDate, formatBookingMoney } from "@/lib/bookings/types";
 import BookingActions from "./booking-actions";
@@ -106,7 +107,12 @@ export default function BookingRentalCard({ row, today, compact, onOpen }: Props
       </div>
       <div className={`flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 bg-gray-50/45 px-4 dark:border-gray-800 dark:bg-white/2 ${compact ? "py-1.5" : "py-2.5"}`}>
         <BookingActions key={`${row.id}-${row.version}`} booking={row} compact />
-        <Button type="button" size="sm" variant="outline" onClick={() => onOpen(row.id)}>{t("workspace.openDetails")}</Button>
+        <div className="flex items-center gap-2">
+          {(row.status === "RETURNED" || row.status === "CANCELLED") && (
+            <DeleteRecordButton kind="booking" id={row.id} version={row.version} label={t("reference", { id: row.id.slice(0, 8).toUpperCase() })} />
+          )}
+          <Button type="button" size="sm" variant="outline" onClick={() => onOpen(row.id)}>{t("workspace.openDetails")}</Button>
+        </div>
       </div>
     </article>
   );
