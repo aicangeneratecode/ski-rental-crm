@@ -6,6 +6,7 @@ import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client";
 import { getDb } from "@/lib/db";
 import { getStaffSession } from "@/lib/require-staff";
+import { isDeletableBookingStatus } from "./policy";
 
 const deleteRecordSchema = z.object({
   kind: z.enum(["customer", "equipment", "booking"]),
@@ -26,10 +27,6 @@ export type DeleteRecordError =
 export type DeleteRecordResult =
   | { ok: true }
   | { ok: false; error: DeleteRecordError };
-
-export function isDeletableBookingStatus(status: string): boolean {
-  return status === "RETURNED" || status === "CANCELLED";
-}
 
 class DeleteRejected extends Error {
   constructor(public readonly reason: DeleteRecordError) {
