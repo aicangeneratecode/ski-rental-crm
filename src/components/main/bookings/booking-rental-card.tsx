@@ -37,7 +37,7 @@ export default function BookingRentalCard({ row, today, compact, onOpen }: Props
   return (
     <article className="overflow-hidden rounded-2xl border border-[#e9e6e1] bg-white shadow-theme-xs transition-colors hover:border-brand-200 dark:border-[#313337] dark:bg-[#1b1e21] dark:hover:border-brand-800">
       <div className="grid lg:grid-cols-[minmax(130px,0.85fr)_minmax(165px,1.1fr)_minmax(250px,3fr)_minmax(175px,1.2fr)]">
-        <div className="flex flex-col items-start gap-2 border-b border-gray-100 p-4 lg:border-e lg:border-b-0 dark:border-gray-800">
+        <div className={`flex flex-col items-start gap-2 border-b border-gray-100 lg:border-e lg:border-b-0 dark:border-gray-800 ${compact ? "p-3" : "p-4"}`}>
           <span className="text-sm font-extrabold tracking-tight text-gray-900 dark:text-white">#{row.id.slice(0, 8).toUpperCase()}</span>
           <span className={`inline-flex max-w-full rounded-md px-2.5 py-1 text-[11px] font-semibold ${statusTone[row.status]}`}>
             {t(`statuses.${row.status}`)}
@@ -56,14 +56,14 @@ export default function BookingRentalCard({ row, today, compact, onOpen }: Props
           )}
         </div>
 
-        <div className="flex flex-col justify-center border-b border-gray-100 bg-gray-50/55 p-4 lg:border-e lg:border-b-0 dark:border-gray-800 dark:bg-white/2">
+        <div className={`flex flex-col justify-center border-b border-gray-100 bg-gray-50/55 lg:border-e lg:border-b-0 dark:border-gray-800 dark:bg-white/2 ${compact ? "p-3" : "p-4"}`}>
           <p className="text-[10px] font-bold uppercase tracking-[0.11em] text-gray-400">{t("layout.period")}</p>
           <p className="mt-2 text-sm font-semibold text-gray-900 dark:text-white">{formatBookingDate(row.startDate)}</p>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{formatBookingDate(row.endDate)}</p>
           {!compact && <p className="mt-2 text-[11px] text-gray-400">{t("paidDays", { count: row.paidDays })}</p>}
         </div>
 
-        <div className="min-w-0 border-b border-gray-100 p-4 lg:border-e lg:border-b-0 dark:border-gray-800">
+        <div className={`min-w-0 border-b border-gray-100 lg:border-e lg:border-b-0 dark:border-gray-800 ${compact ? "p-3" : "p-4"}`}>
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-xs font-bold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">
               {initials(row.customerName)}
@@ -75,7 +75,7 @@ export default function BookingRentalCard({ row, today, compact, onOpen }: Props
               </a>
             </div>
           </div>
-          <div className="mt-3 flex flex-wrap gap-1.5">
+          <div className={`flex flex-wrap gap-1.5 ${compact ? "mt-2" : "mt-3"}`}>
             {tags.map((item) => (
               <span key={item.id} title={item.name}
                 className="max-w-full truncate rounded-md bg-gray-100 px-2.5 py-1.5 text-[11px] font-medium text-gray-700 dark:bg-white/7 dark:text-gray-300">
@@ -88,7 +88,7 @@ export default function BookingRentalCard({ row, today, compact, onOpen }: Props
           </div>
         </div>
 
-        <div className="flex flex-col justify-center p-4">
+        <div className={`flex flex-col justify-center ${compact ? "p-3" : "p-4"}`}>
           <p className="text-[10px] font-bold uppercase tracking-[0.11em] text-gray-400">{t("total")}</p>
           <p className="mt-1 text-xl font-extrabold tracking-tight text-gray-900 dark:text-white">{formatBookingMoney(row.total)}</p>
           <div role="meter" aria-label={t("workspace.paymentProgress")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(paidPercent)} className="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
@@ -104,7 +104,7 @@ export default function BookingRentalCard({ row, today, compact, onOpen }: Props
           )}
         </div>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 bg-gray-50/45 px-4 py-2.5 dark:border-gray-800 dark:bg-white/2">
+      <div className={`flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 bg-gray-50/45 px-4 dark:border-gray-800 dark:bg-white/2 ${compact ? "py-1.5" : "py-2.5"}`}>
         <BookingActions key={`${row.id}-${row.version}`} booking={row} compact />
         <Button type="button" size="sm" variant="outline" onClick={() => onOpen(row.id)}>{t("workspace.openDetails")}</Button>
       </div>
