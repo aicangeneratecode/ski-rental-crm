@@ -65,7 +65,7 @@ function equipmentKey(name: string, tariff: string, size: string) {
 function addPool(map: Map<string, number>, key: string) {
   map.set(key, (map.get(key) ?? 0) + 1);
 }
-function usePool(map: Map<string, number>, key: string) {
+function takePool(map: Map<string, number>, key: string) {
   const count = map.get(key) ?? 0;
   if (!count) return false;
   map.set(key, count - 1);
@@ -139,7 +139,7 @@ function buildPlan(validated: Validated, existingCustomers: ExistingCustomer[], 
   const customers: Plan["customers"] = [];
   for (const row of validated.customers) {
     if (existingCustomerIds.has(row.id)) { matchingCustomers++; continue; }
-    if (usePool(poolsCustomer, customerKey(row.name, row.phone))) { matchingCustomers++; continue; }
+    if (takePool(poolsCustomer, customerKey(row.name, row.phone))) { matchingCustomers++; continue; }
     customers.push(row);
   }
 
@@ -152,7 +152,7 @@ function buildPlan(validated: Validated, existingCustomers: ExistingCustomer[], 
       continue;
     }
     if (existingEquipmentIds.has(data.id)) { matchingEquipment++; continue; }
-    if (usePool(poolsEquipment, equipmentKey(data.name, data.tariff, data.size))) { matchingEquipment++; continue; }
+    if (takePool(poolsEquipment, equipmentKey(data.name, data.tariff, data.size))) { matchingEquipment++; continue; }
     const collision = codes.get(data.code);
     if (collision) {
       throw new Error(`Generated code ${data.code} already belongs to a different inventory item. Import halted safely.`);
