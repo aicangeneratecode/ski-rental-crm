@@ -11,7 +11,7 @@
     "db:generate": "prisma generate",
     "db:setup": "prisma migrate deploy",
     "db:local": "prisma dev --name ski-rental",
-   "test": "node --import tsx --test src/lib/equipment/schema.test.ts src/lib/bookings/pricing.test.ts",
+   "test": "node --import tsx --test src/lib/equipment/schema.test.ts src/lib/bookings/pricing.test.ts src/lib/payments/schema.test.ts",
     "test:db": "node --import tsx --test src/lib/equipment/repository.test.ts"
   },
   "dependencies": {

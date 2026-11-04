@@ -41,6 +41,7 @@ model User {
 
   bookings Booking[]
   payments Payment[]
+  bookingEvents BookingEvent[]
 
   @@unique([email])
   @@map("user")
@@ -143,6 +144,7 @@ model Booking {
 
   items    BookingItem[]
   payments Payment[]
+  events BookingEvent[]
 
   @@index([customerId])
   @@index([createdById])
@@ -197,4 +199,26 @@ model Payment {
 
   @@index([bookingId, createdAt])
   @@index([createdById])
+}
+
+
+enum BookingEventKind {
+  CREATED
+  ISSUED
+  RETURNED
+  CANCELLED
+}
+
+model BookingEvent {
+  id String @id @default(uuid()) @db.Uuid
+  bookingId String @db.Uuid
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+  actorId String
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  kind BookingEventKind
+  bookingVersion Int
+  createdAt DateTime @default(now())
+  @@unique([bookingId, bookingVersion])
+  @@index([bookingId, createdAt])
+  @@index([actorId])
 }

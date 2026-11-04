@@ -2,10 +2,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { getDb } from "@/lib/db";
 
 import { calculateRental } from "./pricing";
-import type {
-  BookingErrorCode,
-  CreateBookingInput,
-} from "./schema";
+import type { BookingErrorCode, CreateBookingInput } from "./schema";
 
 export class BookingError extends Error {
   constructor(public readonly code: BookingErrorCode) {
@@ -20,16 +17,10 @@ export async function createBookingRecord(
 ): Promise<string> {
   const db = getDb();
 
-  const startDate = new Date(
-    `${values.startDate}T00:00:00.000Z`,
-  );
-  const endDate = new Date(
-    `${values.endDate}T00:00:00.000Z`,
-  );
+  const startDate = new Date(`${values.startDate}T00:00:00.000Z`);
+  const endDate = new Date(`${values.endDate}T00:00:00.000Z`);
 
-  const equipmentIds = values.items.map(
-    (item) => item.equipmentId,
-  );
+  const equipmentIds = values.items.map((item) => item.equipmentId);
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
@@ -140,11 +131,18 @@ export async function createBookingRecord(
             select: { id: true },
           });
 
+          await tx.bookingEvent.create({
+            data: {
+              bookingId: booking.id,
+              actorId: staffId,
+              kind: "CREATED",
+              bookingVersion: 1,
+            },
+          });
           return booking.id;
         },
         {
-          isolationLevel:
-            Prisma.TransactionIsolationLevel.Serializable,
+          isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
           maxWait: 5000,
           timeout: 10000,
         },

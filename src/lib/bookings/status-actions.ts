@@ -49,8 +49,7 @@ export async function changeBookingStatus(
 
   const { id, version, action } = parsed.data;
 
-  const expectedStatus =
-    action === "return" ? "ISSUED" : "RESERVED";
+  const expectedStatus = action === "return" ? "ISSUED" : "RESERVED";
 
   const nextStatus =
     action === "issue"
@@ -99,9 +98,7 @@ export async function changeBookingStatus(
 
           if (
             booking.items.length === 0 ||
-            booking.items.some(
-              (item) => item.equipment.status !== "READY",
-            )
+            booking.items.some((item) => item.equipment.status !== "READY")
           ) {
             throw new StatusChangeError("equipmentUnavailable");
           }
@@ -139,10 +136,22 @@ export async function changeBookingStatus(
         if (result.count !== 1) {
           throw new StatusChangeError("conflict");
         }
+        await tx.bookingEvent.create({
+          data: {
+            bookingId: id,
+            actorId: session.user.id,
+            kind:
+              action === "issue"
+                ? "ISSUED"
+                : action === "return"
+                  ? "RETURNED"
+                  : "CANCELLED",
+            bookingVersion: version + 1,
+          },
+        });
       },
       {
-        isolationLevel:
-          Prisma.TransactionIsolationLevel.Serializable,
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
         maxWait: 5000,
         timeout: 10000,
       },

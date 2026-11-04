@@ -17,6 +17,7 @@ import {
   type BookingRow,
 } from "@/lib/bookings/types";
 
+import BookingHistory from "./booking-history";
 import BookingCalculation from "./booking-calculation";
 import BookingPayments from "./booking-payments";
 
@@ -115,15 +116,11 @@ export default function BookingDetails({ booking, onClose }: Props) {
         )}
 
         {tab === "history" && (
-          <section className="space-y-3">
-            <h3 className="font-semibold">{t("layout.historyTitle")}</h3>
-            <p className="text-sm leading-6 text-gray-500">
-              {t("layout.historyHint")}
-            </p>
-            <p className="rounded-xl border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500 dark:border-gray-700">
-              {t("layout.historyEmpty")}
-            </p>
-          </section>
+          <BookingHistory
+            key={booking.id}
+            bookingId={booking.id}
+            version={booking.version}
+          />
         )}
 
         <div className="flex justify-end">
