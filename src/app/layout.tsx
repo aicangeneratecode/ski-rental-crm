@@ -27,7 +27,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} dir={rtl ? "rtl" : "ltr"}>
       <body
-        className={cn("font-sans relative isolate bg-gray-50 dark:bg-gray-900")}
+        className={cn("font-sans relative isolate bg-[#f7f6f3] dark:bg-[#111315]")}
       >
         <NextIntlClientProvider>
           <ThemeProvider>
