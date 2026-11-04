@@ -98,9 +98,9 @@ export default function Bookings({ rows, customers, equipment, today }: Props) {
           {views.map((view) => (
             <button key={view} type="button" aria-pressed={filters.view === view}
               onClick={() => setFilter("view", view)}
-              className={`inline-flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-colors sm:text-sm ${filters.view === view ? "bg-brand-500 text-white shadow-theme-xs" : "text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"}`}>
+              className={`inline-flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-colors sm:text-sm ${filters.view === view ? "bg-brand-700 text-white shadow-theme-xs dark:bg-brand-400 dark:text-gray-950" : "text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white"}`}>
               {w(`views.${view}`)}
-              <span className={`rounded-md px-1.5 py-0.5 text-[10px] tabular-nums ${filters.view === view ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-300"}`}>{counts[view]}</span>
+              <span className={`rounded-md px-1.5 py-0.5 text-[10px] tabular-nums ${filters.view === view ? "bg-white/20 text-white dark:bg-black/10 dark:text-gray-950" : "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-300"}`}>{counts[view]}</span>
             </button>
           ))}
         </div>
