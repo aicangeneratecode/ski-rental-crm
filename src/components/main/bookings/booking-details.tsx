@@ -5,12 +5,12 @@ import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   formatBookingDate,
   formatBookingMoney,
@@ -33,19 +33,19 @@ export default function BookingDetails({ booking, onClose }: Props) {
   const [tab, setTab] = useState<(typeof tabs)[number]>("overview");
 
   return (
-    <Dialog
+    <Sheet
       open
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
     >
-      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-3xl">
-        <DialogHeader>
-          <DialogTitle>
+      <SheetContent side="right" style={{ width: "min(100vw, 640px)", maxWidth: "none" }} className="overflow-y-auto border-[#e9e6e1] dark:border-[#313337] dark:bg-[#1b1e21]">
+        <SheetHeader>
+          <SheetTitle>
             {t("reference", { id: booking.id.slice(0, 8) })}
-          </DialogTitle>
-          <DialogDescription>{t("layout.cardHint")}</DialogDescription>
-        </DialogHeader>
+          </SheetTitle>
+          <SheetDescription>{t("layout.cardHint")}</SheetDescription>
+        </SheetHeader>
 
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-gray-50 p-4 dark:bg-gray-800">
           <div>
@@ -128,7 +128,7 @@ export default function BookingDetails({ booking, onClose }: Props) {
             {t("layout.close")}
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
