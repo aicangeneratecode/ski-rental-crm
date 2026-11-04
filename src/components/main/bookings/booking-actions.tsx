@@ -20,8 +20,10 @@ const confirmationKeys = {
 
 export default function BookingActions({
   booking,
+  compact = false,
 }: {
   booking: BookingRow;
+  compact?: boolean;
 }) {
   const t = useTranslations("bookings.operations");
   const router = useRouter();
@@ -75,7 +77,7 @@ export default function BookingActions({
   if (actions.length === 0) return null;
 
   return (
-    <div className="space-y-3 border-t border-gray-100 pt-3 dark:border-gray-800">
+    <div className={compact ? "space-y-2" : "space-y-3 border-t border-gray-100 pt-3 dark:border-gray-800"}>
       {completed ? (
         <p role="status" className="text-sm text-green-600">
           {t("saved")}
