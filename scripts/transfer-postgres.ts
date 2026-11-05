@@ -65,15 +65,34 @@ function validateArchive(full: string) {
       throw Error("Archive missing essential table "+name+". Do not restore an incomplete backup.");
 }
 function backup() {
-  const url=new URL(localUrl()); url.hostname="host.docker.internal";
+  const local=new URL(localUrl());
   mkdirSync(backupDir,{recursive:true});
   const file="topride-full-"+new Date().toISOString().replace(/[:.]/g,"-")+".dump";
   console.log("Backing up the LOCAL PostgreSQL to a private file; passwords will not be printed.");
-  runDocker([
-    "run","--rm","--mount","type=bind,source="+backupDir+",target=/out",
-    "-e","PG_URL","-e","DUMP_FILE","postgres:17","sh","-c",
-    'exec pg_dump --dbname="$PG_URL" --format=custom --no-owner --no-privileges --file="/out/$DUMP_FILE"',
-  ],{PG_URL:url.toString(),DUMP_FILE:file});
+
+  // Prefer pg_dump INSIDE the existing Compose database container.
+  // compose.yaml exposes port 5432 only on 127.0.0.1, so trying to
+  // reach it via host.docker.internal from another container can fail.
+  const compose=spawnSync("docker",["compose","ps","-q","db"],{
+    env:process.env,encoding:"utf8",
+  });
+  const matchesCompose=local.username==="ski_rental" &&
+    local.pathname==="/ski_rental" && (!local.port||local.port==="5432");
+  if (matchesCompose && compose.status===0 && compose.stdout.trim()) {
+    const temp="/tmp/"+file;
+    runDocker(["compose","exec","-T","db","pg_dump","-U","ski_rental",
+      "-d","ski_rental","--format=custom","--no-owner","--no-privileges","--file="+temp]);
+    runDocker(["compose","cp","db:"+temp,join(backupDir,file)]);
+    runDocker(["compose","exec","-T","db","rm","-f",temp]);
+  } else {
+    // Fallback for a different local PostgreSQL server reachable from Docker.
+    local.hostname="host.docker.internal";
+    runDocker([
+      "run","--rm","--mount","type=bind,source="+backupDir+",target=/out",
+      "-e","PG_URL","-e","DUMP_FILE","postgres:17","sh","-c",
+      'exec pg_dump --dbname="$PG_URL" --format=custom --no-owner --no-privileges --file="/out/$DUMP_FILE"',
+    ],{PG_URL:local.toString(),DUMP_FILE:file});
+  }
   const path=archivePath(join(backupDir,file));validateArchive(path);
   console.log("Verified complete private backup: "+path);
   console.log("Size: "+statSync(path).size+" bytes. Never share this backup publicly.");
