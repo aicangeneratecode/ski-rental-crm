@@ -9,7 +9,7 @@ export default function AppHeader() {
   const t = useTranslations("crm");
   const { theme, toggleTheme } = useTheme();
   return (
-    <header className="topride-header sticky top-0 z-30 flex min-h-20 items-center justify-between gap-3 border-b px-4 py-3 sm:px-8">
+    <header className="topride-header sticky top-0 z-30 flex min-h-16 items-center justify-between gap-3 border-b px-3 py-3 sm:min-h-20 sm:px-8">
       <div className="flex min-w-0 items-center gap-3">
         <SidebarTrigger aria-label={t("toggleMenu")} className="topride-icon-button" />
         <div className="hidden h-7 w-px bg-gray-200 dark:bg-gray-800 sm:block" />
