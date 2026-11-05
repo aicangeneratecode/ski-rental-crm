@@ -159,17 +159,18 @@ async function loadData() {
   };
 }
 
-export default async function Page() {
+export default async function Page({searchParams}:{searchParams:Promise<{customerId?:string;repeat?:string}>}) {
   await requireStaff();
   setRequestLocale("ru");
 
   const t = await getTranslations("bookings");
+  const query = await searchParams;
   const data = await loadData().catch(() => null);
 
   return (
     <>
       {data ? (
-        <Bookings {...data} today={getBelgradeDate()} />
+        <Bookings {...data} today={getBelgradeDate()} prefillCustomerId={query.customerId} repeatBookingId={query.repeat} />
       ) : (
         <ComponentCard title={t("offlineTitle")}>
           <p className="text-sm text-gray-500">{t("offlineBody")}</p>
