@@ -15,7 +15,7 @@ async function loadData(): Promise<{ rentals: CalendarRental[]; inventory: Calen
   const db = getDb();
   const [bookings, equipment] = await Promise.all([
     db.booking.findMany({
-      where: { status: { not: "CANCELLED" } },
+      where: { status: { not: "CANCELLED" }, archivedAt: null },
       orderBy: [{ startDate: "asc" }, { id: "asc" }],
       select: {
         id: true,
