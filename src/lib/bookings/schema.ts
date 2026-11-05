@@ -65,6 +65,10 @@ export type BookingErrorCode =
   | "datesUnavailable"
   | "amountTooLarge"
   | "discountExceedsTotal"
+  | "conflict"
+  | "notEditable"
+  | "issuedRestriction"
+  | "refundRequired"
   | "busy"
   | "schemaOutdated"
   | "databaseUnavailable"
@@ -72,4 +76,15 @@ export type BookingErrorCode =
 
 export type CreateBookingResult =
   | { ok: true; id: string }
+  | { ok: false; error: BookingErrorCode };
+/** Existing bookings are modified with the same pricing validation as new ones. */
+export const updateBookingSchema = z.object({
+  id: z.uuid(),
+  version: z.number().int().positive(),
+  values: createBookingSchema,
+});
+
+export type UpdateBookingInput = z.infer<typeof updateBookingSchema>;
+export type UpdateBookingResult =
+  | { ok: true }
   | { ok: false; error: BookingErrorCode };
