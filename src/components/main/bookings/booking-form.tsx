@@ -46,6 +46,8 @@ type Props = {
   editMode?: "edit" | "extend";
   initialCustomerId?: string;
   repeatFrom?: RentalRow;
+  initialStartDate?: string;
+  initialEndDate?: string;
 };
 
 export default function BookingForm({
@@ -57,6 +59,8 @@ export default function BookingForm({
   editMode = "edit",
   initialCustomerId,
   repeatFrom,
+  initialStartDate,
+  initialEndDate,
 }: Props) {
   const t = useTranslations("bookings");
   const router = useRouter();
@@ -81,8 +85,8 @@ export default function BookingForm({
     resolver: zodResolver(createBookingSchema),
     defaultValues: {
       customerId: booking?.customerId ?? initialCustomerId ?? "",
-      startDate: booking?.startDate ?? "",
-      endDate: booking?.endDate ?? "",
+      startDate: booking?.startDate ?? initialStartDate ?? "",
+      endDate: booking?.endDate ?? initialEndDate ?? initialStartDate ?? "",
       travelDay: booking?.travelDay ?? false,
       discountPercent: booking?.discountPercent ?? 0,
       discountFixed: booking && booking.discountPercent === 0 ? booking.discountAmount : 0,
