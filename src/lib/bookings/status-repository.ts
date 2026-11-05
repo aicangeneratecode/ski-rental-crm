@@ -22,8 +22,9 @@ export async function changeBookingStatusRecord(
   const expectedStatus = action === "return" ? "ISSUED" : "RESERVED";
   const nextStatus = action === "issue" ? "ISSUED" : action === "return" ? "RETURNED" : "CANCELLED";
 
-  try {
-    await getDb().$transaction(async (tx) => {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await getDb().$transaction(async (tx) => {
       const booking = await tx.booking.findUnique({
         where: { id },
         select: {
@@ -109,10 +110,13 @@ export async function changeBookingStatusRecord(
       maxWait: 5000,
       timeout: 10000,
     });
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2034") {
-      throw new StatusChangeError("conflict");
+      return;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2034") {
+        if (attempt < 2) continue;
+        throw new StatusChangeError("conflict");
+      }
+      throw error;
     }
-    throw error;
   }
 }
