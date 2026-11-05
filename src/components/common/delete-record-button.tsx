@@ -93,7 +93,7 @@ export default function DeleteRecordButton({
           </DialogHeader>
 
           <p className="rounded-xl border border-red-100 bg-red-50/60 p-3 text-xs leading-5 text-red-800 dark:border-red-900/70 dark:bg-red-950/25 dark:text-red-300">
-            {kind === "customer" ? t("customerWarning") : t("equipmentWarning")}
+            {kind === "booking" ? t("bookingPermanentWarning") : kind === "customer" ? t("customerWarning") : t("equipmentWarning")}
           </p>
 
           {error && (
