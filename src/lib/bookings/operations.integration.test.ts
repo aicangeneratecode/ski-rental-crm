@@ -54,8 +54,12 @@ test("real PostgreSQL: create, issue, payment history, return, archive and resto
     assert.equal(booking.version, 1);
 
     await assert.rejects(
-      changeBookingStatusRecord(bookingId, 1, "issue", actorId, "2027-01-09"),
+      changeBookingStatusRecord(bookingId, 1, "issue", actorId, "2027-01-08"),
       (error: unknown) => error instanceof StatusChangeError && error.code === "outsideDates",
+    );
+    await assert.rejects(
+      changeBookingStatusRecord(bookingId, 1, "issue", actorId, "2027-01-09"),
+      (error: unknown) => error instanceof StatusChangeError && error.code === "earlyReasonRequired",
     );
     assert.equal((await db.booking.findUniqueOrThrow({ where: { id: bookingId } })).status, "RESERVED");
 
@@ -126,6 +130,22 @@ test("real PostgreSQL: create, issue, payment history, return, archive and resto
     await changeBookingStatusRecord(reserved, 1, "cancel", actorId, values.startDate);
     await setBookingArchivedRecord(reserved, 2, "archive", actorId);
     assert.ok((await db.booking.findUniqueOrThrow({ where: { id: reserved } })).archivedAt);
+
+    // Early issue is a distinct, auditable exception limited to one calendar day.
+    const early = await createBookingRecord({
+      ...values, startDate: "2027-02-10", endDate: "2027-02-11",
+    }, actorId);
+    bookingIds.push(early);
+    await changeBookingStatusRecord(
+      early, 1, "issue", actorId, "2027-02-09",
+      "Клиент уезжает на гору вечером",
+    );
+    const earlyEvent = await db.bookingEvent.findFirstOrThrow({
+      where: { bookingId: early, kind: "ISSUED" }, select: { details: true },
+    });
+    assert.match(earlyEvent.details, /Досрочная выдача/);
+    assert.match(earlyEvent.details, /Клиент уезжает/);
+    await changeBookingStatusRecord(early, 2, "return", actorId, "2027-02-11");
   } finally {
     if (bookingIds.length) {
       await db.payment.deleteMany({ where: { bookingId: { in: bookingIds } } });
