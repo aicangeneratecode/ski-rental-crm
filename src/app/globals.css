@@ -272,3 +272,57 @@ body { background: var(--tr-canvas); color: var(--tr-ink); }
 .topride-shell :is(button,a) { transition: background-color .18s ease, color .18s ease, border-color .18s ease; }
 .topride-shell :is(button,a):focus-visible { outline: 2px solid var(--color-brand-500); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .topride-shell *, .topride-shell *::before, .topride-shell *::after { transition-duration: 0.01ms !important; } }
+
+
+/* TOP RIDE — restrained UI polish. Uses existing palette, no new visual assets. */
+.topride-nav-item {
+  position: relative;
+  min-height: 42px;
+  border-radius: 12px;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+.topride-nav-item-active::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 50%;
+  width: 3px;
+  height: 22px;
+  border-radius: 0 3px 3px 0;
+  background: var(--color-brand-500);
+  transform: translateY(-50%);
+}
+.topride-surface {
+  border-color: var(--tr-line);
+  background-color: var(--tr-surface);
+  box-shadow: 0 2px 12px rgba(31, 31, 31, .025);
+}
+.dark .topride-surface { box-shadow: 0 2px 14px rgba(0, 0, 0, .12); }
+.topride-kpi {
+  border-color: var(--tr-line);
+  box-shadow: 0 2px 10px rgba(31, 31, 31, .025);
+  font-variant-numeric: tabular-nums;
+}
+.dark .topride-kpi { box-shadow: 0 2px 12px rgba(0, 0, 0, .1); }
+.topride-data-table tbody tr {
+  transition: background-color 140ms ease;
+}
+.topride-data-table tbody tr:hover {
+  background: color-mix(in srgb, var(--color-brand-50) 40%, var(--tr-surface));
+}
+.dark .topride-data-table tbody tr:hover { background: rgba(255, 255, 255, .035); }
+.topride-chart-grid {
+  background-image: repeating-linear-gradient(
+    to top,
+    transparent 0,
+    transparent calc(25% - 1px),
+    var(--tr-line) calc(25% - 1px),
+    var(--tr-line) 25%
+  );
+}
+@media (max-width: 639px) {
+  .topride-shell { padding: 20px 14px 56px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .topride-nav-item, .topride-data-table tbody tr { transition: none; }
+}
