@@ -23,6 +23,7 @@ model Equipment {
   maintenanceRecords EquipmentMaintenance[]
 
   @@index([status, tariff])
+  @@index([tariff, status])
 }
 
 model User {
@@ -119,6 +120,7 @@ model Customer {
   targetMerges CustomerMerge[] @relation("CustomerMergeTarget")
 
   @@index([mergedIntoId])
+  @@index([createdAt(sort: Desc), id(sort: Desc)])
   @@index([phone])
   @@index([name])
 }
@@ -161,6 +163,8 @@ model Booking {
   @@index([customerId])
   @@index([createdById])
   @@index([status, startDate, endDate])
+  @@index([startDate, endDate, status])
+  @@index([createdAt(sort: Desc), id(sort: Desc)])
   @@index([archivedAt, status])
 }
 
@@ -179,6 +183,7 @@ model BookingItem {
 
   @@unique([bookingId, equipmentId])
   @@index([equipmentId])
+  @@index([equipmentId, bookingId])
 }
 
 enum PaymentKind {
@@ -211,6 +216,7 @@ model Payment {
   requestId String @unique @db.Uuid
 
   @@index([bookingId, createdAt])
+  @@index([createdAt, kind, method])
   @@index([createdById])
 }
 
