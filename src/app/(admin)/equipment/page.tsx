@@ -5,6 +5,7 @@ import ComponentCard from "@/components/common/component-card";
 import EquipmentCatalog from "@/components/main/equipment";
 import { getDb } from "@/lib/db";
 import { equipmentSchema } from "@/lib/equipment/schema";
+import { readTariffRateMap } from "@/lib/equipment/tariff-settings";
 import type { EquipmentRow } from "@/lib/equipment/types";
 import { requireStaff } from "@/lib/require-staff";
 
@@ -16,11 +17,12 @@ export default async function Page({ searchParams }: { searchParams: Promise<{i?
   const {i} = await searchParams;
   const t = await getTranslations("inventory");
   let rows: EquipmentRow[] = [];
+  let tariffRates: Record<string, number | null> = {};
   let problem: "setup" | "offline" | null = null;
   if (!process.env.DATABASE_URL) problem = "setup";
   else {
     try {
-      const records = await getDb().equipment.findMany({
+      const [records, loadedRates] = await Promise.all([getDb().equipment.findMany({
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         include: {
           bookingItems: {
@@ -47,7 +49,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<{i?
             },
           },
         },
-      });
+      }), readTariffRateMap()]);
+      tariffRates = loadedRates;
       rows = records.map((record) => ({
         ...equipmentSchema.parse(record),
         id: record.id,
@@ -93,7 +96,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{i?
           </code>
         </ComponentCard>
       ) : (
-        <EquipmentCatalog rows={rows} readOnly={false} initialSelectedId={i} />
+        <EquipmentCatalog rows={rows} readOnly={false} initialSelectedId={i} tariffRates={tariffRates} />
       )}
     </>
   );
