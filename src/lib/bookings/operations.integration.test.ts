@@ -145,6 +145,10 @@ test("real PostgreSQL: create, issue, payment history, return, archive and resto
     const reserved = await createBookingRecord(values, actorId);
     bookingIds.push(reserved);
     await assert.rejects(
+      purgeArchivedBooking(reserved, 1),
+      (error: unknown) => error instanceof PurgeError && error.code === "notArchived",
+    );
+    await assert.rejects(
       setBookingArchivedRecord(reserved, 1, "archive", actorId),
       (error: unknown) => error instanceof ArchiveBookingError && error.code === "activeBooking",
     );
