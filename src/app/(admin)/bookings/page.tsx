@@ -22,6 +22,7 @@ async function loadData() {
 
   const [customers, equipment, bookings] = await Promise.all([
     db.customer.findMany({
+      where: { mergedIntoId: null },
       orderBy: { name: "asc" },
       select: {
         id: true,
