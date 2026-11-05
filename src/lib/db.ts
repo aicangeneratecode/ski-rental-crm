@@ -2,11 +2,12 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
 const globalForDb = globalThis as unknown as { rentalDb?: PrismaClient };
 export function getDb() {
-  if (!process.env.DATABASE_URL) throw new Error("DATABASE_NOT_CONFIGURED");
+  const url = process.env.DATABASE_URL_POOLED ?? process.env.DATABASE_URL;
+  if (!url) throw new Error("DATABASE_NOT_CONFIGURED");
   if (!globalForDb.rentalDb) {
     globalForDb.rentalDb = new PrismaClient({
       adapter: new PrismaPg({
-        connectionString: process.env.DATABASE_URL,
+        connectionString: url,
         connectionTimeoutMillis: 5000,
         max: 5,
       }),
