@@ -9,6 +9,7 @@ import { createBookingRecord, BookingError } from "./repository";
 import { changeBookingStatusRecord, StatusChangeError } from "./status-repository";
 import { setBookingArchivedRecord, ArchiveBookingError } from "./archive-repository";
 import { savePaymentRecord, PaymentOperationError } from "@/lib/payments/repository";
+import { recordEquipmentInspection } from "@/lib/equipment/maintenance-repository";
 
 test("real PostgreSQL: create, issue, payment history, return, archive and restore", {
   skip: process.env.CI_TEST_DATABASE_URL !== "1",
@@ -121,6 +122,9 @@ test("real PostgreSQL: create, issue, payment history, return, archive and resto
     );
     assert.equal(await db.payment.count({ where: { bookingId } }), 1);
 
+    const itemAfterReturn = await db.equipment.findUniqueOrThrow({ where: { id: item.id } });
+    assert.equal(itemAfterReturn.status, "MAINTENANCE");
+    await recordEquipmentInspection({equipmentId:item.id,version:itemAfterReturn.version,kind:"INSPECTION",condition:"OK",note:"Проверено после возврата"},actorId);
     const reserved = await createBookingRecord(values, actorId);
     bookingIds.push(reserved);
     await assert.rejects(
@@ -153,7 +157,10 @@ test("real PostgreSQL: create, issue, payment history, return, archive and resto
       await db.bookingItem.deleteMany({ where: { bookingId: { in: bookingIds } } });
       await db.booking.deleteMany({ where: { id: { in: bookingIds } } });
     }
-    if (equipmentId) await db.equipment.deleteMany({ where: { id: equipmentId } });
+    if (equipmentId) {
+      await db.equipmentMaintenance.deleteMany({ where: { equipmentId } });
+      await db.equipment.deleteMany({ where: { id: equipmentId } });
+    }
     if (customerId) await db.customer.deleteMany({ where: { id: customerId } });
     await db.user.deleteMany({ where: { id: actorId } });
     await db.$disconnect();
