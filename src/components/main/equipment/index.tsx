@@ -86,12 +86,13 @@ const selectedItem = rows.find((row) => row.id === selectedId);
         {statuses.map((value) => (
           <div
             key={value}
-            className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900"
+            className="topride-kpi rounded-2xl border bg-white p-4 dark:bg-[#1b1e21] sm:p-5"
           >
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+              <span aria-hidden="true" className={`size-2 shrink-0 rounded-full ${value === "READY" ? "bg-emerald-500" : value === "MAINTENANCE" ? "bg-amber-500" : "bg-gray-400"}`} />
               {t(`statuses.${value}`)}
             </p>
-            <p className="mt-2 text-3xl font-semibold text-gray-900 dark:text-white">
+            <p className="mt-2 text-3xl font-extrabold tracking-tight tabular-nums text-gray-900 dark:text-white">
               {rows.filter((row) => row.status === value).length}
             </p>
           </div>
@@ -102,7 +103,7 @@ const selectedItem = rows.find((row) => row.id === selectedId);
           {t("saved")}
         </p>
       )}
-      <section className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <section className="topride-surface overflow-hidden rounded-2xl border">
         <div className="grid gap-3 border-b border-gray-200 p-5 md:grid-cols-3 dark:border-gray-800">
           <Input
             aria-label={t("search")}
