@@ -8,6 +8,7 @@ import { getDb } from "@/lib/db";
 import { createBookingRecord, BookingError } from "./repository";
 import { changeBookingStatusRecord, StatusChangeError } from "./status-repository";
 import { setBookingArchivedRecord, ArchiveBookingError } from "./archive-repository";
+import { savePaymentRecord, PaymentOperationError } from "@/lib/payments/repository";
 
 test("real PostgreSQL: create, issue, payment history, return, archive and restore", {
   skip: process.env.CI_TEST_DATABASE_URL !== "1",
@@ -67,32 +68,44 @@ test("real PostgreSQL: create, issue, payment history, return, archive and resto
       createBookingRecord(values, actorId),
       (error: unknown) => error instanceof BookingError && error.code === "datesUnavailable",
     );
-    await db.payment.create({ data: {
+    const payment = {
       bookingId,
-      createdById: actorId,
+      version: 2,
       requestId: randomUUID(),
-      kind: "PAYMENT",
-      method: "CASH",
+      kind: "PAYMENT" as const,
+      method: "CASH" as const,
       amount: 2000,
       note: "integration test",
-    } });
-
-    await changeBookingStatusRecord(bookingId, 2, "return", actorId, values.endDate);
-    booking = await db.booking.findUniqueOrThrow({ where: { id: bookingId } });
-    assert.equal(booking.status, "RETURNED");
-    assert.equal(booking.version, 3);
-
-    await setBookingArchivedRecord(bookingId, 3, "archive", actorId);
-    booking = await db.booking.findUniqueOrThrow({ where: { id: bookingId } });
-    assert.ok(booking.archivedAt);
-    assert.equal(booking.version, 4);
+    };
+    const paymentId = await savePaymentRecord(payment, actorId);
+    // A repeated network request must not charge a client twice.
+    assert.equal(await savePaymentRecord(payment, actorId), paymentId);
     assert.equal(await db.payment.count({ where: { bookingId } }), 1);
     await assert.rejects(
-      setBookingArchivedRecord(bookingId, 3, "archive", actorId),
+      savePaymentRecord({ ...payment, requestId: randomUUID(), version: 3, amount: 3000 }, actorId),
+      (error: unknown) => error instanceof PaymentOperationError && error.code === "overpayment",
+    );
+    await assert.rejects(
+      savePaymentRecord({ ...payment, requestId: randomUUID(), version: 3, kind: "REFUND", amount: 3000 }, actorId),
+      (error: unknown) => error instanceof PaymentOperationError && error.code === "refundTooLarge",
+    );
+
+    await changeBookingStatusRecord(bookingId, 3, "return", actorId, values.endDate);
+    booking = await db.booking.findUniqueOrThrow({ where: { id: bookingId } });
+    assert.equal(booking.status, "RETURNED");
+    assert.equal(booking.version, 4);
+
+    await setBookingArchivedRecord(bookingId, 4, "archive", actorId);
+    booking = await db.booking.findUniqueOrThrow({ where: { id: bookingId } });
+    assert.ok(booking.archivedAt);
+    assert.equal(booking.version, 5);
+    assert.equal(await db.payment.count({ where: { bookingId } }), 1);
+    await assert.rejects(
+      setBookingArchivedRecord(bookingId, 4, "archive", actorId),
       (error: unknown) => error instanceof ArchiveBookingError && error.code === "conflict",
     );
 
-    await setBookingArchivedRecord(bookingId, 4, "restore", actorId);
+    await setBookingArchivedRecord(bookingId, 5, "restore", actorId);
     booking = await db.booking.findUniqueOrThrow({ where: { id: bookingId } });
     assert.equal(booking.archivedAt, null);
     assert.equal(booking.version, 5);
