@@ -20,6 +20,7 @@ export async function readBookingHistory(id: string) {
           select: {
             id: true,
             kind: true,
+            details: true,
             createdAt: true,
             actor: { select: { name: true } },
           },
@@ -30,6 +31,7 @@ export async function readBookingHistory(id: string) {
     const events = booking.events.map((event) => ({
       id: event.id,
       kind: event.kind,
+      details: event.details,
       createdAt: event.createdAt.toISOString(),
       actor: event.actor.name,
     }));
@@ -39,6 +41,7 @@ export async function readBookingHistory(id: string) {
       events.push({
         id: `created-${id}`,
         kind: "CREATED",
+        details: "",
         createdAt: booking.createdAt.toISOString(),
         actor: booking.createdBy.name,
       });
