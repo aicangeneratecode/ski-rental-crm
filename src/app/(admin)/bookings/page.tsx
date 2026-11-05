@@ -161,7 +161,7 @@ async function loadData() {
   };
 }
 
-export default async function Page({searchParams}:{searchParams:Promise<{customerId?:string;repeat?:string;startDate?:string;endDate?:string}>}) {
+export default async function Page({searchParams}:{searchParams:Promise<{customerId?:string;repeat?:string;startDate?:string;endDate?:string;bookingId?:string}>}) {
   await requireStaff();
   setRequestLocale("ru");
 
@@ -172,7 +172,7 @@ export default async function Page({searchParams}:{searchParams:Promise<{custome
   return (
     <>
       {data ? (
-        <Bookings {...data} today={getBelgradeDate()} prefillCustomerId={query.customerId} repeatBookingId={query.repeat} prefillStartDate={query.startDate} prefillEndDate={query.endDate} />
+        <Bookings {...data} today={getBelgradeDate()} prefillCustomerId={query.customerId} repeatBookingId={query.repeat} prefillStartDate={query.startDate} prefillEndDate={query.endDate} openBookingId={query.bookingId} />
       ) : (
         <ComponentCard title={t("offlineTitle")}>
           <p className="text-sm text-gray-500">{t("offlineBody")}</p>
