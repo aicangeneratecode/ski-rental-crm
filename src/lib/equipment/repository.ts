@@ -1,5 +1,6 @@
 import { Prisma } from "@/generated/prisma/client";
 import { getDb } from "@/lib/db";
+import { classifyDatabaseError, logDatabaseError } from "@/lib/db-errors";
 import { saveEquipmentSchema } from "./schema";
 import type { SaveResult } from "./types";
 export async function saveEquipmentRecord(input: unknown): Promise<SaveResult> {
@@ -24,6 +25,7 @@ export async function saveEquipmentRecord(input: unknown): Promise<SaveResult> {
       error.code === "P2002"
     )
       return { ok: false, error: "duplicate" };
-    return { ok: false, error: "database" };
+    logDatabaseError("saveEquipment", error);
+    return { ok: false, error: classifyDatabaseError(error) };
   }
 }
