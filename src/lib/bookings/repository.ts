@@ -28,10 +28,10 @@ export async function createBookingRecord(
         async (tx) => {
           const customer = await tx.customer.findUnique({
             where: { id: values.customerId },
-            select: { id: true },
+            select: { id: true, mergedIntoId: true },
           });
 
-          if (!customer) {
+          if (!customer || customer.mergedIntoId) {
             throw new BookingError("customerMissing");
           }
 
