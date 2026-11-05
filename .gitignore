@@ -51,3 +51,8 @@ next-env.d.ts
 /topride_import_clean_*.json
 /exported_clients_*.csv
 /exported_inventories_*.csv
+
+# Confidential full PostgreSQL archives from TOP RIDE
+/.topride-private-backups/
+*.dump
+*.backup
