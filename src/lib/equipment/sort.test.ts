@@ -35,11 +35,18 @@ test("all five equipment columns sort by displayed text or numeric price, both w
     dailyRate:["2","3","1"], // numeric RSD, not alphabetic strings
     status:["2","1","3"], // displayed status text
   };
+  const expectedDescending: Record<EquipmentSortKey, string[]> = {
+    name:["1","3","2"],
+    tariff:["1","3","2"], // identical tariff rows retain their relative order
+    size:["1","3","2"],
+    dailyRate:["1","3","2"],
+    status:["3","1","2"],
+  };
   for (const key of Object.keys(expected) as EquipmentSortKey[]) {
     const asc = sortEquipmentRows(rows,{key,direction:"asc"},labels);
     const desc = sortEquipmentRows(rows,{key,direction:"desc"},labels);
     assert.deepEqual(ids(asc),expected[key],key+" ascending");
-    assert.deepEqual(ids(desc),[...expected[key]].reverse(),key+" descending");
+    assert.deepEqual(ids(desc),expectedDescending[key],key+" descending");
   }
 });
 
