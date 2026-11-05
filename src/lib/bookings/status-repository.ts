@@ -94,6 +94,26 @@ export async function changeBookingStatusRecord(
       });
       if (result.count !== 1) throw new StatusChangeError("conflict");
 
+      if (action === "issue" || action === "return") {
+        // Returning equipment requires an inspection before its next issue.
+        if (action === "return") {
+          await tx.equipment.updateMany({
+            where: { id: { in: booking.items.map(x => x.equipmentId) }, status: "READY" },
+            data: { status: "MAINTENANCE", version: { increment: 1 } },
+          });
+        }
+        await tx.equipmentMaintenance.createMany({
+          data: booking.items.map(item => ({
+            equipmentId: item.equipmentId,
+            actorId: staffId,
+            bookingId: id,
+            kind: action === "issue" ? "CHECK_OUT" as const : "CHECK_IN" as const,
+            condition: action === "issue" ? "OK" : "NEEDS_SERVICE",
+            note: action === "return" ? "Возврат принят. Требуется осмотр перед новой выдачей." : "",
+          })),
+        });
+      }
+
       await tx.bookingEvent.create({
         data: {
           bookingId: id,
