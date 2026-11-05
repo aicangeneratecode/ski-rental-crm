@@ -66,6 +66,8 @@ export type BookingErrorCode =
   | "amountTooLarge"
   | "discountExceedsTotal"
   | "busy"
+  | "schemaOutdated"
+  | "databaseUnavailable"
   | "database";
 
 export type CreateBookingResult =
