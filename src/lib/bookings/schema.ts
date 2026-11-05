@@ -9,7 +9,7 @@ export const createBookingSchema = z
     endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
     travelDay: z.boolean(),
     discountPercent: z.number().int().min(0).max(100),
-    discountFixed: z.number().int().min(0).max(2_147_483_647).default(0),
+    discountFixed: z.number().int().min(0).max(2_147_483_647),
     notes: z.string().trim().max(2000),
     items: z
       .array(
