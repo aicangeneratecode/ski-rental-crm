@@ -25,7 +25,10 @@ export default async function RootLayout({
   const rtl = isRtl(locale as Locale);
 
   return (
-    <html lang={locale} dir={rtl ? "rtl" : "ltr"}>
+    <html lang={locale} dir={rtl ? "rtl" : "ltr"} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `try{var m=localStorage.getItem("theme-mode")||localStorage.getItem("theme")||"light";var d=m==="dark"||(m==="auto"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d)}catch(e){}` }} />
+      </head>
       <body
         className={cn("font-sans relative isolate bg-[#f7f6f3] dark:bg-[#111315]")}
       >
