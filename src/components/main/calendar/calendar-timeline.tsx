@@ -55,16 +55,32 @@ export default function CalendarTimeline({ anchor, today, rentals, mode, onRenta
           const baseHeight = mode === "month" ? "min-h-[166px]" : "min-h-[224px]";
 
           return (
-            <div key={days[0]} className={`relative ${baseHeight} border-b border-gray-200 last:border-b-0 dark:border-gray-800`}>
+            <div key={days[0]} className={`relative ${baseHeight} border-b border-gray-200 last:border-b-0 dark:border-gray-800`}
+              onDragOver={(event) => {
+                if (!event.dataTransfer.types.includes("text/plain")) return;
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "move";
+                const rect = event.currentTarget.getBoundingClientRect();
+                const index = Math.max(0, Math.min(6, Math.floor((event.clientX - rect.left) / rect.width * 7)));
+                setDropTarget(days[index]);
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+                setDropTarget(null);
+                const id = event.dataTransfer.getData("text/plain");
+                const rect = event.currentTarget.getBoundingClientRect();
+                const index = Math.max(0, Math.min(6, Math.floor((event.clientX - rect.left) / rect.width * 7)));
+                if (rentals.some(r => r.id === id && r.status === "RESERVED")) onMove(id, days[index]);
+              }}
+              onDragLeave={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget as Node)) setDropTarget(null);
+              }}>
               <div className="absolute inset-0 grid grid-cols-7" aria-hidden="false">
                 {days.map((day, dayIndex) => {
                   const outside = mode === "month" && day.slice(0, 7) !== anchor.slice(0, 7);
                   const isToday = day === today;
                   return (
-                    <div key={day} onDragOver={(event) => { if (event.dataTransfer.types.includes("text/plain")) { event.preventDefault(); event.dataTransfer.dropEffect = "move"; setDropTarget(day); } }}
-                      onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setDropTarget(null); }}
-                      onDrop={(event) => { event.preventDefault(); setDropTarget(null); const id = event.dataTransfer.getData("text/plain"); if (rentals.some(r => r.id === id && r.status === "RESERVED")) onMove(id, day); }}
-                      className={`relative border-e border-gray-100 last:border-e-0 dark:border-gray-800
+                    <div key={day} className={`relative border-e border-gray-100 last:border-e-0 dark:border-gray-800
                       ${outside ? "bg-gray-50/70 dark:bg-white/2" : dayIndex >= 5 ? "bg-gray-50/30 dark:bg-white/1" : ""}
                       ${isToday ? "bg-brand-50/50 dark:bg-brand-500/5" : ""}
                       ${dropTarget === day ? "bg-brand-100 ring-2 ring-inset ring-brand-500 dark:bg-brand-500/20" : ""}`}>
