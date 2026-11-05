@@ -22,6 +22,7 @@ import { createBooking } from "@/lib/bookings/actions";
 import { updateBooking } from "@/lib/bookings/update-actions";
 import type { RentalRow } from "./booking-list-utils";
 import { categories, getTariff } from "@/lib/equipment/tariffs";
+import { kitPartCategory, kitProgress, rentalKits, type RentalKitId } from "@/lib/bookings/kits";
 import BookingInlineCustomer from "./booking-inline-customer";
 import BookingCustomerPicker from "./booking-customer-picker";
 import { calculateRental } from "@/lib/bookings/pricing";
@@ -58,6 +59,7 @@ export default function BookingForm({
   const [search, setSearch] = useState("");
   const [customerQuery, setCustomerQuery] = useState(booking?.customerName ?? "");
   const [category, setCategory] = useState("all");
+  const [kit, setKit] = useState<RentalKitId | null>(null);
   const [discountMode, setDiscountMode] = useState<"percent" | "fixed">(booking && booking.discountPercent === 0 && booking.discountAmount > 0 ? "fixed" : "percent");
   const issued = booking?.status === "ISSUED";
   const extending = Boolean(booking && editMode === "extend");
@@ -312,6 +314,45 @@ export default function BookingForm({
             <section className="space-y-3">
               <h3 className="font-medium">{t("equipment")}</h3>
               {issued && <p className="text-xs text-amber-700 dark:text-amber-400">{t("issuedItemsLocked")}</p>}
+              {!issued && (
+                <div className="space-y-2 rounded-xl border border-gray-200 bg-gray-50/40 p-3 dark:border-gray-700 dark:bg-gray-800/50">
+                  <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">{t("kitTemplates")}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {(Object.keys(rentalKits) as RentalKitId[]).map((id) => (
+                      <button type="button" key={id} aria-pressed={kit === id}
+                        onClick={() => {
+                          setKit(id);
+                          setCategory(kitPartCategory(rentalKits[id][0]));
+                          setSearch("");
+                        }}
+                        className={"rounded-lg border px-3 py-2 text-xs font-semibold transition-colors " +
+                          (kit === id ? "border-brand-500 bg-brand-50 text-brand-800 dark:bg-brand-500/10 dark:text-brand-300" :
+                          "border-gray-200 bg-white text-gray-600 hover:border-brand-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300")}>
+                        {t(("kits." + id) as "kits.ski")}
+                      </button>
+                    ))}
+                    {kit && <button type="button" onClick={() => setKit(null)}
+                      className="rounded-lg px-2 py-2 text-xs text-gray-500 underline underline-offset-2 dark:text-gray-400">{t("clearKit")}</button>}
+                  </div>
+                  {kit && (
+                    <>
+                      <div className="flex flex-wrap gap-2">
+                        {kitProgress(kit, items.map((selected) =>
+                          equipment.find((item) => item.id === selected.equipmentId)?.tariff ?? "")).map(({part, selected}) => (
+                          <button type="button" key={part}
+                            onClick={() => { setCategory(kitPartCategory(part)); setSearch(""); }}
+                            className={"rounded-lg border px-3 py-1.5 text-xs font-medium focus-visible:outline-2 focus-visible:outline-brand-500 " +
+                              (selected ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-300" :
+                              "border-gray-200 bg-white text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300")}>
+                            {selected ? "✓ " : "○ "}{t(("kitParts." + part) as "kitParts.skis")}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{t("kitHint")}</p>
+                    </>
+                  )}
+                </div>
+              )}
               {!issued && <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
