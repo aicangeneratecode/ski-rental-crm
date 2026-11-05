@@ -14,6 +14,7 @@ import { z } from "zod";
 import { getDb } from "../src/lib/db";
 import { customerSchema } from "../src/lib/customers/schema";
 import { equipmentSchema } from "../src/lib/equipment/schema";
+import { normalizeEquipmentModelName } from "../src/lib/equipment/normalize-legacy";
 
 const customerSourceSchema = z.object({
   sourceRow: z.number().int().positive(),
@@ -104,8 +105,8 @@ function validatedData(source: Source) {
       return { row, data: null };
     }
     const parsed = equipmentSchema.safeParse({
-      code: `TRLEG26-${String(row.sourceRow).padStart(4, "0")}`,
-      name: row.name, tariff: row.tariff, size: row.size,
+      code: String(row.sourceRow).padStart(4, "0"),
+      name: normalizeEquipmentModelName(row.name, row.size), tariff: row.tariff, size: row.size,
       dailyRate: row.dailyRate, status: "READY", notes: row.notes,
     });
     if (!parsed.success) throw new Error(`Invalid equipment at CSV row ${row.sourceRow}: ${z.prettifyError(parsed.error)}`);
