@@ -9,7 +9,7 @@ import { getBelgradeDate } from "@/lib/bookings/today";
 import type { BookingRow } from "@/lib/bookings/types";
 
 export const metadata: Metadata = {
-  title: "Сегодня | Ski Rental CRM",
+  title: "Сегодня | TOP RIDE",
 };
 
 export const dynamic = "force-dynamic";
