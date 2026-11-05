@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { Prisma } from "@/generated/prisma/client";
 import { getDb } from "@/lib/db";
+import { classifyDatabaseError, logDatabaseError } from "@/lib/db-errors";
 import { getStaffSession } from "@/lib/require-staff";
 
 import {
@@ -162,7 +163,8 @@ export async function savePayment(
       return { ok: false, error: "conflict" };
     }
 
-    return { ok: false, error: "database" };
+    logDatabaseError("savePayment", error);
+    return { ok: false, error: classifyDatabaseError(error) };
   }
 
   revalidatePath("/bookings");
