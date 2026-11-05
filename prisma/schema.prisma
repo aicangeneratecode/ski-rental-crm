@@ -45,6 +45,8 @@ model User {
   bookingEvents BookingEvent[]
   maintenanceEvents EquipmentMaintenance[]
   customerMerges CustomerMerge[]
+  tariffChanges TariffChange[]
+  settingsChanges WorkspaceSettingsChange[]
 
   @@unique([email])
   @@map("user")
@@ -277,4 +279,48 @@ model CustomerMerge {
 
   @@index([targetId, createdAt])
   @@index([sourceId])
+}
+
+model TariffRate {
+  code String @id @db.VarChar(40)
+  rate Int?
+  version Int @default(1)
+  updatedAt DateTime @updatedAt
+  changes TariffChange[]
+}
+
+model TariffChange {
+  id String @id @default(uuid()) @db.Uuid
+  code String @db.VarChar(40)
+  tariff TariffRate @relation(fields: [code], references: [code], onDelete: Restrict)
+  actorId String
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  previousRate Int?
+  newRate Int?
+  affectedItems Int @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([code, createdAt])
+}
+
+model WorkspaceSettings {
+  id String @id @default("default") @db.VarChar(20)
+  businessName String @default("TOP RIDE") @db.VarChar(120)
+  contactPhone String @default("") @db.VarChar(40)
+  contactAddress String @default("") @db.VarChar(250)
+  customerNote String @default("") @db.VarChar(1000)
+  version Int @default(1)
+  updatedAt DateTime @updatedAt
+  changes WorkspaceSettingsChange[]
+}
+
+model WorkspaceSettingsChange {
+  id String @id @default(uuid()) @db.Uuid
+  settingsId String @db.VarChar(20)
+  settings WorkspaceSettings @relation(fields: [settingsId], references: [id], onDelete: Restrict)
+  actorId String
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+
+  @@index([settingsId, createdAt])
 }
