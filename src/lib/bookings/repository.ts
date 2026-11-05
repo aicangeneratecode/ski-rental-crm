@@ -90,13 +90,22 @@ export async function createBookingRecord(
             };
           });
 
-          const pricing = calculateRental({
+          let pricing: ReturnType<typeof calculateRental>;
+          try {
+            pricing = calculateRental({
             startDate: values.startDate,
             endDate: values.endDate,
             travelDay: values.travelDay,
             discountPercent: values.discountPercent,
+            discountFixed: values.discountFixed,
             items: selectedItems,
-          });
+            });
+          } catch (error) {
+            if (error instanceof Error && error.message === "DISCOUNT_EXCEEDS_SUBTOTAL") {
+              throw new BookingError("discountExceedsTotal");
+            }
+            throw error;
+          }
 
           // Денежные поля в PostgreSQL имеют тип Int.
           if (pricing.standardSubtotal > 2_147_483_647) {
