@@ -71,7 +71,7 @@ export default function TariffEditor({ row, onSaved }: {
       <div className="mt-4 flex flex-wrap items-end gap-2">
         <label className="min-w-32 flex-1 space-y-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300">
           {t("newRate")}
-          <Input inputType="number" type="number" min="0" max="1000000" step="1"
+          <Input type="number" min="0" max="1000000" step="1"
             value={value} disabled={busy || manual}
             onChange={event => setValue(event.target.value)}
             aria-invalid={!valid} />
