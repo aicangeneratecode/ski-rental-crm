@@ -8,11 +8,12 @@ import { equipmentSchema } from "@/lib/equipment/schema";
 import type { EquipmentRow } from "@/lib/equipment/types";
 import { requireStaff } from "@/lib/require-staff";
 
-export const metadata: Metadata = { title: "Оборудование | Ski Rental CRM" };
+export const metadata: Metadata = { title: "Оборудование | TOP RIDE" };
 export const dynamic = "force-dynamic";
-export default async function Page() {
+export default async function Page({ searchParams }: { searchParams: Promise<{i?:string}> }) {
   await requireStaff();
   setRequestLocale("ru");
+  const {i} = await searchParams;
   const t = await getTranslations("inventory");
   let rows: EquipmentRow[] = [];
   let problem: "setup" | "offline" | null = null;
@@ -92,7 +93,7 @@ export default async function Page() {
           </code>
         </ComponentCard>
       ) : (
-        <EquipmentCatalog rows={rows} readOnly={false} />
+        <EquipmentCatalog rows={rows} readOnly={false} initialSelectedId={i} />
       )}
     </>
   );
