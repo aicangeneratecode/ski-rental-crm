@@ -11,7 +11,7 @@ export type BookingCustomer = {
     size: string;
     dailyRate: number;
     tariff: string;
-    status?: "READY" | "MAINTENANCE" | "ARCHIVED";
+    status?: string;
     reservations: {
       startDate: string;
       endDate: string;
