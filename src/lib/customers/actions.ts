@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { getDb } from "@/lib/db";
+import { classifyDatabaseError, logDatabaseError } from "@/lib/db-errors";
 import { getStaffSession } from "@/lib/require-staff";
 import {
   saveCustomerSchema,
@@ -47,8 +48,9 @@ export async function saveCustomer(
         data: values,
       });
     }
-  } catch {
-    return { ok: false, error: "database" };
+  } catch (error) {
+    logDatabaseError("saveCustomer", error);
+    return { ok: false, error: classifyDatabaseError(error) };
   }
 
   revalidatePath("/customers");
@@ -58,7 +60,7 @@ export async function saveCustomer(
 /** Create a customer from an open booking without leaving the booking form. */
 export async function createCustomerFromBooking(input: unknown): Promise<
   | { ok: true; customer: { id: string; name: string; phone: string } }
-  | { ok: false; error: "invalid" | "authRequired" | "database" }
+  | { ok: false; error: "invalid" | "authRequired" | "schemaOutdated" | "databaseUnavailable" | "database" }
 > {
   const session = await getStaffSession();
   if (!session) return { ok: false, error: "authRequired" };
@@ -74,7 +76,8 @@ export async function createCustomerFromBooking(input: unknown): Promise<
     revalidatePath("/customers");
     revalidatePath("/bookings");
     return { ok: true, customer };
-  } catch {
-    return { ok: false, error: "database" };
+  } catch (error) {
+    logDatabaseError("createCustomerFromBooking", error);
+    return { ok: false, error: classifyDatabaseError(error) };
   }
 }
