@@ -64,6 +64,8 @@ permissions/availability should be managed explicitly and Preview should
 not be able to change the production schema. Keep Vercel Framework Preset
 **Next.js**, Root Directory **repository root**, and Output Directory **automatic**.
 
+> **Если у вас уже есть локальные клиенты, снаряжение и брони:** не начинайте с `db:setup` в облаке. Сначала откройте [перенос всей базы без потерь](transfer-local-to-vercel.md): резервная копия, восстановление в новую пустую PostgreSQL, проверка всех таблиц, затем `db:setup` и создание аккаунта владельца. Эта последовательность заменяет шаг 4 ниже для существующих данных.
+
 ## 4. Initialize database explicitly — one time per environment
 
 **Important: the following command changes whichever PostgreSQL is bound to
