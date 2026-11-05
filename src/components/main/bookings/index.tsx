@@ -46,7 +46,7 @@ export default function Bookings({ rows, customers, equipment, today }: Props) {
   const currentPage = Math.min(page, maxPage);
   const shown = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const selected = rows.find((row) => row.id === selectedId);
-  const canCreate = customers.length > 0 && equipment.length > 0;
+  const canCreate = equipment.length > 0;
 
   function setFilter<K extends keyof RentalFilters>(key: K, value: RentalFilters[K]) {
     setFilters((previous) => ({ ...previous, [key]: value }));
