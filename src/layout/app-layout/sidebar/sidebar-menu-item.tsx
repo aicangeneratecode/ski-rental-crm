@@ -39,7 +39,7 @@ export default function SidebarMenuItem({
           pathname.startsWith("/ai-settings")),
     ),
   );
-  const isDirectActive = Boolean(nav.path && nav.path === pathname);
+  const isDirectActive = Boolean(nav.path && (nav.path === pathname || (nav.path !== "/" && pathname.startsWith(nav.path + "/"))));
   const isItemActive = hasSubItems ? isOpen || hasActiveChild : isDirectActive;
   const isPanelOpen = showContent && isOpen;
 
@@ -108,9 +108,12 @@ export default function SidebarMenuItem({
           <Link
             href={nav.path}
             target={nav.target}
+            aria-current={isDirectActive ? "page" : undefined}
+            aria-label={t(`items.${nav.key}`)}
+            title={!showContent ? t(`items.${nav.key}`) : undefined}
             className={cn(
-              "group menu-item",
-              isItemActive ? "menu-item-active" : "menu-item-inactive",
+              "group menu-item top-ride-nav-item",
+              isItemActive ? "menu-item-active top-ride-nav-item-active" : "menu-item-inactive",
               !showContent ? "lg:justify-center" : "lg:justify-start",
             )}
           >

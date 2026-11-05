@@ -41,17 +41,17 @@
   --color-white: #ffffff;
   --color-black: #101828;
 
-  --color-brand-50: rgba(236, 243, 255, 1);
-  --color-brand-100: rgba(221, 233, 255, 1);
-  --color-brand-200: rgba(194, 214, 255, 1);
-  --color-brand-300: rgba(156, 185, 255, 1);
-  --color-brand-400: rgba(117, 146, 255, 1);
-  --color-brand-500: rgba(70, 95, 255, 1);
-  --color-brand-600: rgba(54, 65, 245, 1);
-  --color-brand-700: rgba(42, 49, 216, 1);
-  --color-brand-800: rgba(37, 45, 174, 1);
-  --color-brand-900: rgba(38, 46, 137, 1);
-  --color-brand-950: rgba(22, 25, 80, 1);
+  --color-brand-50: #fff5e9;
+  --color-brand-100: #ffead2;
+  --color-brand-200: #ffd1a3;
+  --color-brand-300: #ffb471;
+  --color-brand-400: #fa9540;
+  --color-brand-500: #f47a10;
+  --color-brand-600: #db6208;
+  --color-brand-700: #b84c0b;
+  --color-brand-800: #913e12;
+  --color-brand-900: #773615;
+  --color-brand-950: #431b09;
 
   --shadow-theme-md:
     0px 4px 8px -2px rgba(16, 24, 40, 0.1),
@@ -67,7 +67,7 @@
     0px 20px 24px -4px rgba(16, 24, 40, 0.08),
     0px 8px 8px -4px rgba(16, 24, 40, 0.03);
   --shadow-datepicker: -5px 0 0 #262d3c, 5px 0 0 #262d3c;
-  --shadow-focus-ring: 0px 0px 0px 4px rgba(70, 95, 255, 0.12);
+  --shadow-focus-ring: 0px 0px 0px 4px rgba(244, 122, 16, 0.16);
   --shadow-slider-navigation:
     0px 1px 2px 0px rgba(16, 24, 40, 0.1), 0px 1px 3px 0px rgba(16, 24, 40, 0.1);
   --shadow-tooltip:
@@ -236,4 +236,93 @@
     display: none;
     -webkit-appearance: none;
   }
+}
+
+/* TOP RIDE — premium neutral surfaces. Theme follows the existing .dark provider. */
+:root {
+  color-scheme: light;
+  --tr-canvas: #f7f6f3;
+  --tr-surface: #ffffff;
+  --tr-ink: #242321;
+  --tr-line: #e9e6e1;
+}
+html.dark {
+  color-scheme: dark;
+  --tr-canvas: #111315;
+  --tr-surface: #1b1e21;
+  --tr-ink: #f5f3ef;
+  --tr-line: #313337;
+}
+body { background: var(--tr-canvas); color: var(--tr-ink); }
+[data-slot="sidebar-wrapper"], [data-slot="sidebar-inset"] { background: var(--tr-canvas); }
+[data-sidebar="sidebar-inner"], [data-slot="sidebar"][data-mobile="true"] { background: var(--tr-surface); }
+[data-slot="sidebar-container"] { border-color: var(--tr-line); }
+.topride-header { border-color: var(--tr-line); background: color-mix(in srgb, var(--tr-surface) 94%, transparent); backdrop-filter: blur(18px); }
+.topride-login { background: radial-gradient(ellipse at 14% 10%, rgba(244,122,16,.085), transparent 38%), var(--tr-canvas); }
+.topride-shell { width: 100%; max-width: 1600px; padding: 24px 22px 64px; }
+@media (min-width: 768px) { .topride-shell { padding: 34px 42px 80px; } }
+.topride-shell :is(h1,h2,h3) { letter-spacing: -.035em; }
+.topride-shell :is(article, [data-slot="card"]) { transition: border-color .2s ease, box-shadow .2s ease; }
+.topride-shell article:hover { border-color: var(--color-brand-200); }
+.dark .topride-shell article:hover { border-color: var(--color-brand-800); }
+.topride-shell :is(input,textarea,select) { transition: border-color .2s ease, box-shadow .2s ease; }
+.topride-shell :is(input,textarea,select):focus-visible { outline-color: var(--color-brand-500); }
+.topride-shell :is(table) { font-variant-numeric: tabular-nums; }
+.topride-shell :is(th) { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .075em; }
+.topride-shell :is(button,a) { transition: background-color .18s ease, color .18s ease, border-color .18s ease; }
+.topride-shell :is(button,a):focus-visible { outline: 2px solid var(--color-brand-500); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .topride-shell *, .topride-shell *::before, .topride-shell *::after { transition-duration: 0.01ms !important; } }
+
+
+/* TOP RIDE — restrained UI polish. Uses existing palette, no new visual assets. */
+.topride-nav-item {
+  position: relative;
+  min-height: 42px;
+  border-radius: 12px;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+.topride-nav-item-active::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 50%;
+  width: 3px;
+  height: 22px;
+  border-radius: 0 3px 3px 0;
+  background: var(--color-brand-500);
+  transform: translateY(-50%);
+}
+.topride-surface {
+  border-color: var(--tr-line);
+  background-color: var(--tr-surface);
+  box-shadow: 0 2px 12px rgba(31, 31, 31, .025);
+}
+.dark .topride-surface { box-shadow: 0 2px 14px rgba(0, 0, 0, .12); }
+.topride-kpi {
+  border-color: var(--tr-line);
+  box-shadow: 0 2px 10px rgba(31, 31, 31, .025);
+  font-variant-numeric: tabular-nums;
+}
+.dark .topride-kpi { box-shadow: 0 2px 12px rgba(0, 0, 0, .1); }
+.topride-data-table tbody tr {
+  transition: background-color 140ms ease;
+}
+.topride-data-table tbody tr:hover {
+  background: color-mix(in srgb, var(--color-brand-50) 40%, var(--tr-surface));
+}
+.dark .topride-data-table tbody tr:hover { background: rgba(255, 255, 255, .035); }
+.topride-chart-grid {
+  background-image: repeating-linear-gradient(
+    to top,
+    transparent 0,
+    transparent calc(25% - 1px),
+    var(--tr-line) calc(25% - 1px),
+    var(--tr-line) 25%
+  );
+}
+@media (max-width: 639px) {
+  .topride-shell { padding: 20px 14px 56px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .topride-nav-item, .topride-data-table tbody tr { transition: none; }
 }

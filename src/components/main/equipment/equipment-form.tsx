@@ -22,11 +22,13 @@ import type { EquipmentRow, SaveResult } from "@/lib/equipment/types";
 import SelectField from "./select-field";
 interface EquipmentFormProps {
   item?: EquipmentRow;
+  tariffRates: Record<string, number | null>;
   onClose: () => void;
   onSaved: () => void;
 }
 export default function EquipmentForm({
   item,
+  tariffRates,
   onClose,
   onSaved,
 }: EquipmentFormProps) {
@@ -48,7 +50,7 @@ export default function EquipmentForm({
       name: "",
       tariff: "ski-premium",
       size: "",
-      dailyRate: 2000,
+      dailyRate: tariffRates["ski-premium"] ?? 2000,
       status: "READY",
       notes: "",
     },
@@ -122,7 +124,9 @@ export default function EquipmentForm({
                     }))}
                     onChange={(value) => {
                       field.onChange(value);
-                      const rate = getTariff(value)?.rate;
+                      const rate = Object.prototype.hasOwnProperty.call(tariffRates, value)
+                        ? tariffRates[value]
+                        : getTariff(value)?.rate;
                       setValue("dailyRate", rate ?? NaN, {
                         shouldValidate: true,
                         shouldDirty: true,

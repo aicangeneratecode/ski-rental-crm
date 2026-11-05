@@ -1,11 +1,12 @@
 "use client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PlusIcon, BoxIcon } from "@/icons";
 import { categories, statuses, getTariff } from "@/lib/equipment/tariffs";
 import type { EquipmentRow } from "@/lib/equipment/types";
+import { sortEquipmentRows, toggleEquipmentSort, type EquipmentSort, type EquipmentSortKey } from "@/lib/equipment/sort";
 import EquipmentForm from "./equipment-form";
 import EquipmentTable from "./equipment-table";
 import EquipmentDetails from "./equipment-details";
@@ -13,20 +14,27 @@ import SelectField from "./select-field";
 interface EquipmentCatalogProps {
   rows: EquipmentRow[];
   readOnly: boolean;
+  initialSelectedId?: string;
+  tariffRates: Record<string, number | null>;
 }
 export default function EquipmentCatalog({
   rows,
   readOnly,
+  initialSelectedId,
+  tariffRates,
 }: EquipmentCatalogProps) {
   const t = useTranslations("inventory");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId && rows.some(r=>r.id===initialSelectedId)?initialSelectedId:null);
 const selectedItem = rows.find((row) => row.id === selectedId);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [status, setStatus] = useState("active");
   const [editing, setEditing] = useState<EquipmentRow | "new" | null>(null);
   const [saved, setSaved] = useState(false);
-  const visible = rows.filter((row) => {
+  const [sort, setSort] = useState<EquipmentSort>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const visible = useMemo(() => rows.filter((row) => {
     const matchesStatus =
       status === "all" ||
       (status === "active" ? row.status !== "ARCHIVED" : row.status === status);
@@ -40,7 +48,18 @@ const selectedItem = rows.find((row) => row.id === selectedId);
       matchesCategory &&
       text.includes(query.trim().toLocaleLowerCase("ru"))
     );
-  });
+  }),[rows,status,category,query,t]);
+  const ordered = useMemo(() => sortEquipmentRows(visible, sort, {
+    tariff: (code) => t(`tariffs.${code}`),
+    status: (value) => t(`statuses.${value}`),
+  }),[visible,sort,t]);
+  const totalPages = Math.max(1, Math.ceil(ordered.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pageRows = ordered.slice((currentPage-1)*pageSize,currentPage*pageSize);
+  function changeSort(key:EquipmentSortKey) {
+    setSort(current=>toggleEquipmentSort(current,key));
+    setPage(1);
+  }
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -67,12 +86,13 @@ const selectedItem = rows.find((row) => row.id === selectedId);
         {statuses.map((value) => (
           <div
             key={value}
-            className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900"
+            className="topride-kpi rounded-2xl border bg-white p-4 dark:bg-[#1b1e21] sm:p-5"
           >
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+              <span aria-hidden="true" className={`size-2 shrink-0 rounded-full ${value === "READY" ? "bg-emerald-500" : value === "MAINTENANCE" ? "bg-amber-500" : "bg-gray-400"}`} />
               {t(`statuses.${value}`)}
             </p>
-            <p className="mt-2 text-3xl font-semibold text-gray-900 dark:text-white">
+            <p className="mt-2 text-3xl font-extrabold tracking-tight tabular-nums text-gray-900 dark:text-white">
               {rows.filter((row) => row.status === value).length}
             </p>
           </div>
@@ -83,18 +103,18 @@ const selectedItem = rows.find((row) => row.id === selectedId);
           {t("saved")}
         </p>
       )}
-      <section className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+      <section className="topride-surface overflow-hidden rounded-2xl border">
         <div className="grid gap-3 border-b border-gray-200 p-5 md:grid-cols-3 dark:border-gray-800">
           <Input
             aria-label={t("search")}
             placeholder={t("search")}
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => { setQuery(event.target.value); setPage(1); }}
           />
           <SelectField
             label={t("categoryFilter")}
             value={category}
-            onChange={setCategory}
+            onChange={(value)=>{setCategory(value);setPage(1)}}
             options={[
               { value: "all", label: t("allCategories") },
               ...categories.map((value) => ({
@@ -106,7 +126,7 @@ const selectedItem = rows.find((row) => row.id === selectedId);
           <SelectField
             label={t("statusFilter")}
             value={status}
-            onChange={setStatus}
+            onChange={(value)=>{setStatus(value);setPage(1)}}
             options={[
               { value: "active", label: t("activeOnly") },
               { value: "all", label: t("allStatuses") },
@@ -119,7 +139,9 @@ const selectedItem = rows.find((row) => row.id === selectedId);
         </div>
         {visible.length ? (
           <EquipmentTable
-          rows={visible}
+          rows={pageRows}
+          sort={sort}
+          onSort={changeSort}
           onView={(item) => setSelectedId(item.id)}
           onEdit={(item) => {
             setSaved(false);
@@ -143,6 +165,7 @@ const selectedItem = rows.find((row) => row.id === selectedId);
                   setQuery("");
                   setCategory("all");
                   setStatus("all");
+                  setPage(1);
                 }}
               >
                 {t("reset")}
@@ -150,9 +173,23 @@ const selectedItem = rows.find((row) => row.id === selectedId);
             )}
           </div>
         )}
-        <p className="border-t border-gray-100 px-5 py-3 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
-          {t("shown", { count: visible.length, total: rows.length })}
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 px-5 py-3 dark:border-gray-800">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {t("shown", { count: visible.length, total: rows.length })}
+            {" · "}{t("pageOf",{page:currentPage,total:totalPages})}
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+              {t("perPage")}
+              <select value={pageSize} onChange={event=>{setPageSize(Number(event.target.value));setPage(1)}}
+                className="h-9 rounded-lg border border-gray-200 bg-white px-2 text-sm dark:border-gray-700 dark:bg-gray-800">
+                {[20,50,100].map(value=><option value={value} key={value}>{value}</option>)}
+              </select>
+            </label>
+            <Button type="button" variant="outline" size="sm" disabled={currentPage<=1} onClick={()=>setPage(v=>Math.max(1,v-1))}>{t("previousPage")}</Button>
+            <Button type="button" variant="outline" size="sm" disabled={currentPage>=totalPages} onClick={()=>setPage(v=>Math.min(totalPages,v+1))}>{t("nextPage")}</Button>
+          </div>
+        </div>
       </section>
       {selectedItem && (
         <EquipmentDetails
@@ -172,6 +209,7 @@ const selectedItem = rows.find((row) => row.id === selectedId);
         <EquipmentForm
           key={editing === "new" ? "new" : `${editing.id}-${editing.version}`}
           item={editing === "new" ? undefined : editing}
+          tariffRates={tariffRates}
           onClose={() => setEditing(null)}
           onSaved={() => setSaved(true)}
         />

@@ -91,13 +91,13 @@ export default function TodayDashboard({ rows, today }: Props) {
   }
 
   return (
-    <div className="space-y-5 text-gray-900 dark:text-gray-100">
+    <div className="space-y-7 text-gray-900 dark:text-gray-100">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-sm text-gray-500">
             {formatBookingDate(today)} · Europe/Belgrade
           </p>
-          <h1 className="mt-1 text-3xl font-semibold">{t("title")}</h1>
+          <h1 className="mt-1 text-3xl font-extrabold tracking-tight sm:text-4xl">{t("title")}</h1>
           <p className="mt-2 text-sm text-gray-500">
             {t("description")}
           </p>
@@ -125,16 +125,16 @@ export default function TodayDashboard({ rows, today }: Props) {
             type="button"
             aria-pressed={filter === kind}
             onClick={() => setFilter(kind)}
-            className={`rounded-2xl border bg-white p-5 text-start transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 dark:bg-gray-900 ${
+            className={`topride-kpi rounded-2xl border bg-white p-4 text-start transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 dark:bg-[#1b1e21] sm:p-5 ${
               filter === kind
-                ? "border-brand-500 ring-1 ring-brand-500"
-                : "border-gray-200 dark:border-gray-800"
+                ? "border-brand-500 bg-brand-50/40 ring-1 ring-brand-500 dark:bg-brand-500/10"
+                : "border-[#e9e6e1] dark:border-[#313337]"
             }`}
           >
             <span className="block text-sm text-gray-500">
               {t(kind)}
             </span>
-            <span className="mt-3 block text-3xl font-semibold">
+            <span className="mt-3 block text-3xl font-extrabold tracking-tight tabular-nums">
               {tasks.filter((task) => task.kind === kind).length}
             </span>
           </button>
@@ -168,7 +168,7 @@ export default function TodayDashboard({ rows, today }: Props) {
       {visible.length === 0 ? (
         <p
           role="status"
-          className="rounded-2xl border border-dashed border-gray-300 p-10 text-center text-sm text-gray-500 dark:border-gray-700"
+          className="topride-surface rounded-2xl border border-dashed p-8 text-center text-sm text-gray-500 dark:border-gray-700 sm:p-10"
         >
           {t(tasks.length === 0 ? "empty" : "noMatches")}
         </p>
@@ -177,7 +177,7 @@ export default function TodayDashboard({ rows, today }: Props) {
           {visible.map(({ row, kind }) => (
             <article
               key={row.id}
-              className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900"
+              className="topride-surface rounded-2xl border p-4 sm:p-5"
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0">

@@ -208,7 +208,7 @@ export default function RentalDatePicker({
                     onClick={() => choose(date)}
                     className={`h-9 rounded-lg text-sm focus-visible:outline-2 disabled:opacity-25 ${
                       date === value
-                        ? "bg-brand-500 text-white"
+                        ? "bg-brand-700 text-white dark:bg-brand-400 dark:text-gray-950"
                         : "hover:bg-gray-100 dark:hover:bg-gray-800"
                     }`}
                   >

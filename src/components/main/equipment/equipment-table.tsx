@@ -10,22 +10,29 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import DeleteRecordButton from "@/components/common/delete-record-button";
 import { formatRsd } from "@/lib/equipment/tariffs";
 import type { EquipmentRow } from "@/lib/equipment/types";
+import type { EquipmentSort, EquipmentSortKey } from "@/lib/equipment/sort";
 interface EquipmentTableProps {
   rows: EquipmentRow[];
   onEdit: (item: EquipmentRow) => void;
   onView: (item: EquipmentRow) => void;
   readOnly: boolean;
+  sort: EquipmentSort;
+  onSort: (key: EquipmentSortKey) => void;
 }
 export default function EquipmentTable({
   rows,
   onEdit,
   onView,
   readOnly,
+  sort,
+  onSort,
 }: EquipmentTableProps) {
   const t = useTranslations("inventory");
   const profileT = useTranslations("equipmentProfile");
+  const sortableColumns: readonly string[] = ["name", "tariff", "size", "dailyRate", "status"];
   const columns = useMemo<ColumnDef<Record<string, never>, EquipmentRow>[]>(
     () => [
       { accessorKey: "code", header: t("fields.code") },
@@ -81,6 +88,13 @@ export default function EquipmentTable({
             >
               {t("edit")}
             </Button>
+            <DeleteRecordButton
+              kind="equipment"
+              id={info.row.original.id}
+              version={info.row.original.version}
+              label={`${info.row.original.code} · ${info.row.original.name}`}
+              disabled={readOnly}
+            />
           </div>
         ),
       },
@@ -93,7 +107,7 @@ export default function EquipmentTable({
     columns,
   });
   return (
-    <div className="overflow-x-auto">
+    <div className="topride-data-table overflow-x-auto">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((group) => (
@@ -102,12 +116,30 @@ export default function EquipmentTable({
                 <TableCell
                   isHeader
                   key={header.id}
+                  aria-sort={sort?.key === header.column.id
+                    ? sort.direction === "asc" ? "ascending" : "descending"
+                    : undefined}
                   className="border-b border-gray-200 px-4 py-3 text-start text-xs font-medium whitespace-nowrap text-gray-500 dark:border-gray-800 dark:text-gray-400"
                 >
-                  {flexRender(
-                    header.column.columnDef.header,
-                    header.getContext(),
-                  )}
+                  {sortableColumns.includes(header.column.id) ? (
+                    <button
+                      type="button"
+                      onClick={() => onSort(header.column.id as EquipmentSortKey)}
+                      aria-label={t("sortByColumn", {
+                        column: typeof header.column.columnDef.header === "string"
+                          ? header.column.columnDef.header
+                          : header.column.id,
+                      })}
+                      className={`inline-flex min-h-8 items-center gap-2 rounded-lg px-1.5 text-start font-semibold transition-colors hover:bg-gray-100 hover:text-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 dark:hover:bg-gray-800 dark:hover:text-brand-300 ${sort?.key === header.column.id ? "text-brand-700 dark:text-brand-300" : ""}`}
+                    >
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                      <span aria-hidden="true" className={sort?.key === header.column.id ? "text-brand-600 dark:text-brand-400" : "text-gray-400"}>
+                        {sort?.key === header.column.id
+                          ? sort.direction === "asc" ? "↑" : "↓"
+                          : "↕"}
+                      </span>
+                    </button>
+                  ) : flexRender(header.column.columnDef.header, header.getContext())}
                 </TableCell>
               ))}
             </TableRow>

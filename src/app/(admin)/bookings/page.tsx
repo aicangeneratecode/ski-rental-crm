@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
-import PageBreadcrumb from "@/components/common/page-breadcrumb";
 import ComponentCard from "@/components/common/component-card";
 import Bookings from "@/components/main/bookings";
 import { getDb } from "@/lib/db";
 import { requireStaff } from "@/lib/require-staff";
+import { getBelgradeDate } from "@/lib/bookings/today";
 
 export const metadata: Metadata = {
-  title: "Бронирования | Ski Rental CRM",
+  title: "Аренды | TOP RIDE",
 };
 
 export const dynamic = "force-dynamic";
@@ -22,6 +22,7 @@ async function loadData() {
 
   const [customers, equipment, bookings] = await Promise.all([
     db.customer.findMany({
+      where: { mergedIntoId: null },
       orderBy: { name: "asc" },
       select: {
         id: true,
@@ -30,7 +31,6 @@ async function loadData() {
       },
     }),
     db.equipment.findMany({
-      where: { status: "READY" },
       orderBy: { code: "asc" },
       select: {
         id: true,
@@ -38,6 +38,8 @@ async function loadData() {
         name: true,
         size: true,
         dailyRate: true,
+        tariff: true,
+        status: true,
         bookingItems: {
           where: {
             booking: {
@@ -47,6 +49,8 @@ async function loadData() {
           select: {
             booking: {
               select: {
+                id: true,
+                status: true,
                 startDate: true,
                 endDate: true,
               },
@@ -56,11 +60,13 @@ async function loadData() {
       },
     }),
     db.booking.findMany({
-      take: 100,
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       select: {
         id: true,
         version: true,
+        customerId: true,
+        createdAt: true,
+        archivedAt: true,
         startDate: true,
         endDate: true,
         status: true,
@@ -87,6 +93,7 @@ async function loadData() {
           orderBy: { equipmentCode: "asc" },
           select: {
             id: true,
+            equipmentId: true,
             equipmentCode: true,
             equipmentName: true,
             complimentary: true,
@@ -106,7 +113,11 @@ async function loadData() {
       name: item.name,
       size: item.size,
       dailyRate: item.dailyRate,
+      tariff: item.tariff,
+      status: item.status,
       reservations: item.bookingItems.map(({ booking }) => ({
+        bookingId: booking.id,
+        status: booking.status,
         startDate: dateOnly(booking.startDate),
         endDate: dateOnly(booking.endDate),
       })),
@@ -114,6 +125,9 @@ async function loadData() {
     rows: bookings.map((booking) => ({
       id: booking.id,
       version: booking.version,
+      customerId: booking.customerId,
+      createdAt: booking.createdAt.toISOString(),
+      archivedAt: booking.archivedAt?.toISOString() ?? null,
       customerName: booking.customer.name,
       customerPhone: booking.customer.phone,
       startDate: dateOnly(booking.startDate),
@@ -136,6 +150,7 @@ async function loadData() {
       ),
       items: booking.items.map((item) => ({
         id: item.id,
+        equipmentId: item.equipmentId,
         code: item.equipmentCode,
         name: item.equipmentName,
         complimentary: item.complimentary,
@@ -146,19 +161,18 @@ async function loadData() {
   };
 }
 
-export default async function Page() {
+export default async function Page({searchParams}:{searchParams:Promise<{customerId?:string;repeat?:string;startDate?:string;endDate?:string;bookingId?:string}>}) {
   await requireStaff();
   setRequestLocale("ru");
 
   const t = await getTranslations("bookings");
+  const query = await searchParams;
   const data = await loadData().catch(() => null);
 
   return (
     <>
-      <PageBreadcrumb pageTitle={t("title")} />
-
       {data ? (
-        <Bookings {...data} />
+        <Bookings {...data} today={getBelgradeDate()} prefillCustomerId={query.customerId} repeatBookingId={query.repeat} prefillStartDate={query.startDate} prefillEndDate={query.endDate} openBookingId={query.bookingId} />
       ) : (
         <ComponentCard title={t("offlineTitle")}>
           <p className="text-sm text-gray-500">{t("offlineBody")}</p>

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "@/i18n/navigation";
 import { changeBookingStatus } from "@/lib/bookings/status-actions";
 import type {
@@ -20,13 +21,16 @@ const confirmationKeys = {
 
 export default function BookingActions({
   booking,
+  compact = false,
 }: {
   booking: BookingRow;
+  compact?: boolean;
 }) {
   const t = useTranslations("bookings.operations");
   const router = useRouter();
 
   const [selected, setSelected] = useState<BookingAction | null>(null);
+  const [earlyReason, setEarlyReason] = useState("");
   const [error, setError] = useState<StatusError | null>(null);
   const [saving, setSaving] = useState(false);
   const [completed, setCompleted] = useState(false);
@@ -52,6 +56,7 @@ export default function BookingActions({
         id: booking.id,
         version: booking.version,
         action: selected,
+        reason: selected === "issue" ? earlyReason : "",
       });
 
       if (!result.ok) {
@@ -75,7 +80,7 @@ export default function BookingActions({
   if (actions.length === 0) return null;
 
   return (
-    <div className="space-y-3 border-t border-gray-100 pt-3 dark:border-gray-800">
+    <div className={compact ? "space-y-2" : "space-y-3 border-t border-gray-100 pt-3 dark:border-gray-800"}>
       {completed ? (
         <p role="status" className="text-sm text-green-600">
           {t("saved")}
@@ -85,6 +90,15 @@ export default function BookingActions({
           <p className="text-sm">
             {t(confirmationKeys[selected])}
           </p>
+          {selected === "issue" && (
+            <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300">
+              {t("earlyReasonLabel")}
+              <Textarea rows={2} maxLength={500} className="mt-2"
+                value={earlyReason} onChange={(event) => setEarlyReason(event.target.value)}
+                placeholder={t("earlyReasonPlaceholder")} />
+              <span className="mt-1 block font-normal text-gray-500">{t("earlyReasonHint")}</span>
+            </label>
+          )}
           <div className="flex flex-wrap gap-2">
             <Button
               type="button"

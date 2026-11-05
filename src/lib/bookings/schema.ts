@@ -8,13 +8,8 @@ export const createBookingSchema = z
     startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
     endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
     travelDay: z.boolean(),
-    discountPercent: z.union([
-      z.literal(0),
-      z.literal(5),
-      z.literal(10),
-      z.literal(15),
-      z.literal(20),
-    ]),
+    discountPercent: z.number().int().min(0).max(100),
+    discountFixed: z.number().int().min(0).max(2_147_483_647),
     notes: z.string().trim().max(2000),
     items: z
       .array(
@@ -27,11 +22,15 @@ export const createBookingSchema = z
       .max(100),
   })
   .superRefine((values, context) => {
+    if (values.discountFixed > 0 && values.discountPercent > 0) {
+      context.addIssue({ code: "custom", message: "DISCOUNT_MODE_CONFLICT", path: ["discountFixed"] });
+    }
     try {
-      // Здесь проверяем даты, скидку и повторяющиеся экземпляры.
+      // Проверяем даты и повторяющиеся экземпляры, цены из базы при сохранении.
       // Настоящие цены получим из базы при сохранении.
       const result = calculateRental({
         ...values,
+        discountFixed: 0, // Real subtotal comes from DB; validate fixed amount at save.
         items: values.items.map((item) => ({
           ...item,
           dailyRate: 0,
@@ -65,9 +64,27 @@ export type BookingErrorCode =
   | "equipmentUnavailable"
   | "datesUnavailable"
   | "amountTooLarge"
+  | "discountExceedsTotal"
+  | "conflict"
+  | "notEditable"
+  | "issuedRestriction"
+  | "refundRequired"
   | "busy"
+  | "schemaOutdated"
+  | "databaseUnavailable"
   | "database";
 
 export type CreateBookingResult =
   | { ok: true; id: string }
+  | { ok: false; error: BookingErrorCode };
+/** Existing bookings are modified with the same pricing validation as new ones. */
+export const updateBookingSchema = z.object({
+  id: z.uuid(),
+  version: z.number().int().positive(),
+  values: createBookingSchema,
+});
+
+export type UpdateBookingInput = z.infer<typeof updateBookingSchema>;
+export type UpdateBookingResult =
+  | { ok: true }
   | { ok: false; error: BookingErrorCode };

@@ -10,15 +10,20 @@ export type BookingCustomer = {
     name: string;
     size: string;
     dailyRate: number;
+    tariff: string;
+    status?: string;
     reservations: {
       startDate: string;
       endDate: string;
+      bookingId?: string;
+      status?: "RESERVED" | "ISSUED" | "RETURNED" | "CANCELLED";
     }[];
   };
   
   export type BookingRow = {
     id: string;
     version: number;
+    customerId?: string;
     customerName: string;
     customerPhone: string;
     startDate: string;
@@ -33,6 +38,7 @@ export type BookingCustomer = {
     discountAmount: number;
     items: {
       id: string;
+      equipmentId?: string;
       code: string;
       name: string;
       complimentary: boolean;

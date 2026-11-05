@@ -62,52 +62,50 @@ test("long rental receives no automatic discount", () => {
   assert.equal(result.total, 20000);
 });
 
-test("each discount becomes available at its paid-day threshold", () => {
-  const cases = [
-    { discount: 5, days: 4 },
-    { discount: 10, days: 6 },
-    { discount: 15, days: 8 },
-    { discount: 20, days: 10 },
-  ] as const;
-
-  for (const { discount, days } of cases) {
-    const result = calculateRental(
-      booking({
-        endDate: `2027-01-${9 + days}`,
-        discountPercent: discount,
-      }),
-    );
-
-    assert.equal(result.paidDays, days);
-    assert.equal(
-      result.total,
-      2000 * days * (1 - discount / 100),
-    );
-
-    assert.throws(
-      () =>
-        calculateRental(
-          booking({
-            endDate: `2027-01-${8 + days}`,
-            discountPercent: discount,
-          }),
-        ),
-      /DISCOUNT_NOT_AVAILABLE/,
-    );
-  }
+test("arbitrary percentage is allowed even on a one-day rental", () => {
+  const total = calculateRental(booking({ endDate: "2027-01-10", discountPercent: 37 }));
+  assert.equal(total.subtotal, 2000);
+  assert.equal(total.discountAmount, 740);
+  assert.equal(total.total, 1260);
 });
 
-test("free travel day does not count toward discount eligibility", () => {
+test("manual fixed RSD discount changes total without changing rates", () => {
+  const result = calculateRental(booking({ discountPercent: 0, discountFixed: 1555 }));
+  assert.equal(result.subtotal, 6000);
+  assert.equal(result.discountAmount, 1555);
+  assert.equal(result.total, 4445);
+  assert.equal(result.lines[0].amount, 6000);
+});
+
+test("rounds fractional percent discount to whole dinars", () => {
+  const result = calculateRental(booking({
+    endDate: "2027-01-10",
+    discountPercent: 33,
+    items: [{ equipmentId: "helmet", dailyRate: 75, complimentary: false }],
+  }));
+  assert.equal(result.discountAmount, 25);
+  assert.equal(result.total, 50);
+});
+
+test("fully discounted rentals may have zero total", () => {
+  assert.equal(calculateRental(booking({ discountPercent: 100 })).total, 0);
+  assert.equal(calculateRental(booking({ discountFixed: 6000 })).total, 0);
+});
+
+test("rejects out-of-range discount, a fixed discount above subtotal and mixed modes", () => {
+  for (const discountPercent of [-1, 101, 1.5, Number.NaN]) {
+    assert.throws(() => calculateRental(booking({ discountPercent })), /INVALID_DISCOUNT/);
+  }
+  for (const discountFixed of [-1, 1.5, Number.NaN]) {
+    assert.throws(() => calculateRental(booking({ discountFixed })), /INVALID_DISCOUNT/);
+  }
   assert.throws(
-    () =>
-      calculateRental(
-        booking({
-          endDate: "2027-01-13",
-          travelDay: true,
-          discountPercent: 5,
-        }),
-      ),
-    /DISCOUNT_NOT_AVAILABLE/,
+    () => calculateRental(booking({ discountPercent: 5, discountFixed: 100 })),
+    /INVALID_DISCOUNT/,
+  );
+  assert.throws(
+    () => calculateRental(booking({ discountFixed: 6001 })),
+    /DISCOUNT_EXCEEDS_SUBTOTAL/,
   );
 });
 

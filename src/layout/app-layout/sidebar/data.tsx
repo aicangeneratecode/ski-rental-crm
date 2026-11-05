@@ -1,5 +1,6 @@
 import {
   BoxIcon,
+  BarChartIcon,
   CalendarIcon,
   LayoutGridIcon,
   PluginIcon,
@@ -27,6 +28,11 @@ export const navItems: NavItem[] = [
     key: "customers",
     path: "/customers",
     icon: <UserCircleIcon className="size-6" />,
+  },
+  {
+    key: "reports",
+    path: "/reports",
+    icon: <BarChartIcon className="size-6" />,
   },
   {
     key: "settings",

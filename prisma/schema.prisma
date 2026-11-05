@@ -20,8 +20,10 @@ model Equipment {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   bookingItems BookingItem[]
+  maintenanceRecords EquipmentMaintenance[]
 
   @@index([status, tariff])
+  @@index([tariff, status])
 }
 
 model User {
@@ -42,6 +44,10 @@ model User {
   bookings Booking[]
   payments Payment[]
   bookingEvents BookingEvent[]
+  maintenanceEvents EquipmentMaintenance[]
+  customerMerges CustomerMerge[]
+  tariffChanges TariffChange[]
+  settingsChanges WorkspaceSettingsChange[]
 
   @@unique([email])
   @@map("user")
@@ -107,7 +113,14 @@ model Customer {
   updatedAt DateTime @updatedAt
 
   bookings Booking[]
+  mergedIntoId String? @db.Uuid
+  mergedInto Customer? @relation("CustomerAliases", fields: [mergedIntoId], references: [id], onDelete: Restrict)
+  mergedAliases Customer[] @relation("CustomerAliases")
+  sourceMerges CustomerMerge[] @relation("CustomerMergeSource")
+  targetMerges CustomerMerge[] @relation("CustomerMergeTarget")
 
+  @@index([mergedIntoId])
+  @@index([createdAt(sort: Desc), id(sort: Desc)])
   @@index([phone])
   @@index([name])
 }
@@ -138,6 +151,7 @@ model Booking {
   total           Int
 
   notes     String   @default("") @db.VarChar(2000)
+  archivedAt DateTime?
   version   Int      @default(1)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -149,6 +163,9 @@ model Booking {
   @@index([customerId])
   @@index([createdById])
   @@index([status, startDate, endDate])
+  @@index([startDate, endDate, status])
+  @@index([createdAt(sort: Desc), id(sort: Desc)])
+  @@index([archivedAt, status])
 }
 
 model BookingItem {
@@ -166,6 +183,7 @@ model BookingItem {
 
   @@unique([bookingId, equipmentId])
   @@index([equipmentId])
+  @@index([equipmentId, bookingId])
 }
 
 enum PaymentKind {
@@ -198,6 +216,7 @@ model Payment {
   requestId String @unique @db.Uuid
 
   @@index([bookingId, createdAt])
+  @@index([createdAt, kind, method])
   @@index([createdById])
 }
 
@@ -207,6 +226,11 @@ enum BookingEventKind {
   ISSUED
   RETURNED
   CANCELLED
+  ARCHIVED
+  RESTORED
+  UPDATED
+  EXTENDED
+  CUSTOMER_MERGED
 }
 
 model BookingEvent {
@@ -216,9 +240,93 @@ model BookingEvent {
   actorId String
   actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
   kind BookingEventKind
+  details String @default("") @db.VarChar(2000)
   bookingVersion Int
   createdAt DateTime @default(now())
   @@unique([bookingId, bookingVersion])
   @@index([bookingId, createdAt])
   @@index([actorId])
+}
+
+enum EquipmentMaintenanceKind {
+  CHECK_OUT
+  CHECK_IN
+  INSPECTION
+  SERVICE
+  DAMAGE
+}
+
+model EquipmentMaintenance {
+  id String @id @default(uuid()) @db.Uuid
+  equipmentId String @db.Uuid
+  equipment Equipment @relation(fields: [equipmentId], references: [id], onDelete: Restrict)
+  actorId String
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  kind EquipmentMaintenanceKind
+  condition String @default("") @db.VarChar(30)
+  note String @default("") @db.VarChar(1500)
+  bookingId String? @db.Uuid
+  createdAt DateTime @default(now())
+
+  @@index([equipmentId, createdAt])
+  @@index([bookingId])
+}
+
+model CustomerMerge {
+  id String @id @default(uuid()) @db.Uuid
+  sourceId String @db.Uuid
+  source Customer @relation("CustomerMergeSource", fields: [sourceId], references: [id], onDelete: Restrict)
+  targetId String @db.Uuid
+  target Customer @relation("CustomerMergeTarget", fields: [targetId], references: [id], onDelete: Restrict)
+  actorId String
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  bookingsMoved Int
+  createdAt DateTime @default(now())
+
+  @@index([targetId, createdAt])
+  @@index([sourceId])
+}
+
+model TariffRate {
+  code String @id @db.VarChar(40)
+  rate Int?
+  version Int @default(1)
+  updatedAt DateTime @updatedAt
+  changes TariffChange[]
+}
+
+model TariffChange {
+  id String @id @default(uuid()) @db.Uuid
+  code String @db.VarChar(40)
+  tariff TariffRate @relation(fields: [code], references: [code], onDelete: Restrict)
+  actorId String
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  previousRate Int?
+  newRate Int?
+  affectedItems Int @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([code, createdAt])
+}
+
+model WorkspaceSettings {
+  id String @id @default("default") @db.VarChar(20)
+  businessName String @default("TOP RIDE") @db.VarChar(120)
+  contactPhone String @default("") @db.VarChar(40)
+  contactAddress String @default("") @db.VarChar(250)
+  customerNote String @default("") @db.VarChar(1000)
+  version Int @default(1)
+  updatedAt DateTime @updatedAt
+  changes WorkspaceSettingsChange[]
+}
+
+model WorkspaceSettingsChange {
+  id String @id @default(uuid()) @db.Uuid
+  settingsId String @db.VarChar(20)
+  settings WorkspaceSettings @relation(fields: [settingsId], references: [id], onDelete: Restrict)
+  actorId String
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+
+  @@index([settingsId, createdAt])
 }

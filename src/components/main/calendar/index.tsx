@@ -1,330 +1,229 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-
 import { Link, useRouter } from "@/i18n/navigation";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import BookingDetails from "@/components/main/bookings/booking-details";
-import { formatBookingDate } from "@/lib/bookings/types";
-import type { CalendarEquipment } from "@/lib/bookings/calendar-types";
 import RentalDatePicker from "@/components/ui/rental-date-picker";
+import BookingDetails from "@/components/main/bookings/booking-details";
+import type { CalendarFilters, CalendarInventory, CalendarRental } from "./calendar-types";
+import { addDays, applyCalendarFilters, endOfMonth, formatFullDay, formatMonth, formatShortDate,
+  overlaps, shiftMonth, startOfMonth, startOfWeek } from "./calendar-utils";
+import CalendarTimeline from "./calendar-timeline";
+import CalendarMobile from "./calendar-mobile";
+import CalendarMoveDialog from "./calendar-move-dialog";
+import { CalendarAgenda, CalendarBoard, CalendarOccupancy } from "./calendar-views";
 
-const DAY_MS = 86_400_000;
-const gridStyle = {
-  gridTemplateColumns: "220px minmax(0, 1fr)",
-};
+type Props = { rentals: CalendarRental[]; inventory: CalendarInventory[]; today: string };
+type Pane = "calendar" | "board" | "occupancy";
+type PeriodMode = "month" | "week" | "day" | "agenda";
+const modes: PeriodMode[] = ["month", "week", "day", "agenda"];
+const panes: Pane[] = ["calendar", "board", "occupancy"];
+const emptyFilters: CalendarFilters = { equipmentId: "", tariff: "", customerId: "", staffId: "", search: "" };
+const selectStyle = "h-10 w-full min-w-0 rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-800 shadow-theme-xs outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/15 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100";
 
-function timestamp(value: string) {
-  return Date.parse(`${value}T00:00:00.000Z`);
+function periodLabel(anchor: string, pane: Pane, mode: PeriodMode) {
+  if (pane === "board" || (pane === "calendar" && (mode === "month" || mode === "agenda")))
+    return formatMonth(anchor);
+  if (pane === "occupancy" || mode === "week") {
+    const first = startOfWeek(anchor);
+    return `${formatShortDate(first)} — ${formatShortDate(addDays(first, 6))}`;
+  }
+  return formatFullDay(anchor);
+}
+function rentalScope(anchor: string, pane: Pane, mode: PeriodMode) {
+  if (pane === "board" || (pane === "calendar" && (mode === "month" || mode === "agenda"))) {
+    return [startOfMonth(anchor), endOfMonth(anchor)];
+  }
+  if (pane === "occupancy" || mode === "week") {
+    const first = startOfWeek(anchor);
+    return [first, addDays(first, 6)];
+  }
+  return [anchor, anchor];
 }
 
-function addDays(value: string, days: number) {
-  return new Date(timestamp(value) + days * DAY_MS)
-    .toISOString()
-    .slice(0, 10);
-}
-
-function weekOf(value: string) {
-  const weekday = new Date(timestamp(value)).getUTCDay();
-  return addDays(value, -((weekday + 6) % 7));
-}
-
-function offset(start: string, value: string) {
-  return Math.round((timestamp(value) - timestamp(start)) / DAY_MS);
-}
-
-function dayLabel(value: string) {
-  return new Intl.DateTimeFormat("ru-RU", {
-    timeZone: "UTC",
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  }).format(new Date(timestamp(value)));
-}
-
-type Props = {
-  equipment: CalendarEquipment[];
-  today: string;
-};
-
-export default function RentalCalendar({ equipment, today }: Props) {
-  const t = useTranslations("calendar");
-  const live = useTranslations("calendarLive");
-  const inventory = useTranslations("inventory");
-  const bookingsT = useTranslations("bookings");
+export default function RentalCalendar({ rentals, inventory, today }: Props) {
+  const t = useTranslations("calendarWorkspace");
+  const calendarT = useTranslations("calendar");
+  const bookT = useTranslations("bookings");
   const router = useRouter();
-
-  const [weekStart, setWeekStart] = useState(() => weekOf(today));
-  const [query, setQuery] = useState("");
+  const [anchor, setAnchor] = useState(today);
+  const [pane, setPane] = useState<Pane>("calendar");
+  const [periodMode, setPeriodMode] = useState<PeriodMode>("month");
+  const [filters, setFilters] = useState<CalendarFilters>(emptyFilters);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [moveTarget, setMoveTarget] = useState<{ id: string; startDate: string } | null>(null);
+  const [saved, setSaved] = useState(false);
   const [refreshing, startTransition] = useTransition();
 
-  const days = Array.from({ length: 7 }, (_, index) =>
-    addDays(weekStart, index),
-  );
-  const weekEnd = days[6];
-  const search = query.trim().toLocaleLowerCase("ru");
+  const visibleRentals = useMemo(() => applyCalendarFilters(rentals, filters), [rentals, filters]);
+  const visibleInventory = useMemo(() => inventory.filter((item) =>
+    (!filters.equipmentId || item.id === filters.equipmentId) &&
+    (!filters.tariff || item.tariff === filters.tariff) &&
+    (!filters.search || `${item.name} ${item.code} ${item.size}`.toLocaleLowerCase("ru").includes(filters.search.toLocaleLowerCase("ru")) ||
+      visibleRentals.some((rental) => rental.equipmentIds.includes(item.id)))
+  ), [inventory, filters, visibleRentals]);
+  const tariffs = useMemo(() => [...new Set(inventory.map((item) => item.tariff))].sort((a, b) => a.localeCompare(b, "ru")), [inventory]);
+  const customers = useMemo(() => [...new Map(rentals.map((r) => [r.customerId, r.customerName])).entries()]
+    .sort((a, b) => a[1].localeCompare(b[1], "ru")), [rentals]);
+  const staff = useMemo(() => [...new Map(rentals.map((r) => [r.createdById, r.createdByName])).entries()]
+    .sort((a, b) => a[1].localeCompare(b[1], "ru")), [rentals]);
+  const selected = rentals.find((rental) => rental.id === selectedId);
+  const movingRental = rentals.find((rental) => rental.id === moveTarget?.id && rental.status === "RESERVED");
+  const [scopeStart, scopeEnd] = rentalScope(anchor, pane, periodMode);
+  const count = visibleRentals.filter((rental) => overlaps(rental, scopeStart, scopeEnd)).length;
+  const filtered = Object.values(filters).some(Boolean);
 
-  const visible = equipment.filter((item) =>
-    `${item.code} ${item.name} ${item.size}`
-      .toLocaleLowerCase("ru")
-      .includes(search),
-  );
-
-  const selected = equipment
-    .flatMap((item) => item.bookings)
-    .find((booking) => booking.id === selectedId);
-
-  const intersects = (booking: { startDate: string; endDate: string }) =>
-    booking.startDate <= weekEnd && booking.endDate >= weekStart;
-
-  const hasBookings = visible.some((item) =>
-    item.bookings.some(intersects),
-  );
+  function setFilter(key: keyof CalendarFilters, value: string) {
+    setFilters((previous) => ({ ...previous, [key]: value }));
+  }
+  function move(direction: number) {
+    if (pane === "board" || (pane === "calendar" && (periodMode === "month" || periodMode === "agenda"))) {
+      setAnchor((current) => shiftMonth(current, direction));
+    } else if (pane === "occupancy" || periodMode === "week") {
+      setAnchor((current) => addDays(current, direction * 7));
+    } else {
+      setAnchor((current) => addDays(current, direction));
+    }
+  }
+  function createOnDay(day: string) {
+    router.push(`/bookings?startDate=${day}&endDate=${day}`);
+  }
+  function requestMove(id: string, date: string) {
+    if (rentals.some(r => r.id === id && r.status === "RESERVED")) {
+      setSaved(false);
+      setMoveTarget({ id, startDate: date });
+    }
+  }
+  function showDay(day: string) {
+    setAnchor(day);
+    setPane("calendar");
+    setPeriodMode("day");
+  }
 
   return (
     <div className="space-y-5 text-gray-900 dark:text-gray-100">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">{t("title")}</h1>
-          <p className="mt-1 text-sm text-gray-500">{live("hint")}</p>
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.2em] text-brand-600 dark:text-brand-400">TOP RIDE / CALENDAR</p>
+          <h1 className="text-3xl font-extrabold tracking-tight">{calendarT("title")}</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("subtitle")}</p>
         </div>
-
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            disabled={refreshing}
-            onClick={() => startTransition(() => router.refresh())}
-          >
-            {live(refreshing ? "refreshing" : "refresh")}
-          </Button>
-          <Link
-            href="/bookings"
-            className={buttonVariants({ variant: "outline" })}
-          >
-            {t("list")}
-          </Link>
+        <div role="group" aria-label={t("displayType")} className="flex max-w-full flex-wrap gap-1 rounded-xl border border-gray-200 bg-white p-1 dark:border-gray-700 dark:bg-[#1b1e21]">
+          {panes.map((value) => (
+            <button type="button" key={value} aria-pressed={pane === value} onClick={() => setPane(value)}
+              className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-brand-500 sm:text-sm ${pane === value
+                ? "bg-brand-700 text-white dark:bg-brand-400 dark:text-gray-950"
+                : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"}`}>
+              {t(`panes.${value}`)}
+            </button>
+          ))}
         </div>
       </header>
 
-      <section className="space-y-4 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            aria-label={t("previous")}
-            onClick={() => setWeekStart(addDays(weekStart, -7))}
-          >
-            ←
-          </Button>
-
-          <p aria-live="polite" className="px-2 text-sm font-semibold">
-            {formatBookingDate(weekStart)}
-            {" — "}
-            {formatBookingDate(weekEnd)}
-          </p>
-
-          <Button
-            type="button"
-            variant="outline"
-            aria-label={t("next")}
-            onClick={() => setWeekStart(addDays(weekStart, 7))}
-          >
-            →
-          </Button>
-
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => {
-              setWeekStart(weekOf(today));
-              startTransition(() => router.refresh());
-            }}
-          >
-            {live("today")}
-          </Button>
+      <section aria-label={t("filters")} className="rounded-2xl border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-[#1b1e21]">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <label className="min-w-0 text-xs font-semibold text-gray-500 dark:text-gray-400">
+            <span className="mb-1.5 block">{t("inventory")}</span>
+            <select value={filters.equipmentId} onChange={(e) => setFilter("equipmentId", e.target.value)} className={selectStyle}>
+              <option value="">{t("allEquipment")}</option>
+              {inventory.map((item) => <option value={item.id} key={item.id}>{item.code} · {item.name} ({item.size})</option>)}
+            </select>
+          </label>
+          <label className="min-w-0 text-xs font-semibold text-gray-500 dark:text-gray-400">
+            <span className="mb-1.5 block">{t("tariff")}</span>
+            <select value={filters.tariff} onChange={(e) => setFilter("tariff", e.target.value)} className={selectStyle}>
+              <option value="">{t("allTariffs")}</option>
+              {tariffs.map((tariff) => <option value={tariff} key={tariff}>{tariff}</option>)}
+            </select>
+          </label>
+          <label className="min-w-0 text-xs font-semibold text-gray-500 dark:text-gray-400">
+            <span className="mb-1.5 block">{t("client")}</span>
+            <select value={filters.customerId} onChange={(e) => setFilter("customerId", e.target.value)} className={selectStyle}>
+              <option value="">{t("allClients")}</option>
+              {customers.map(([id, name]) => <option value={id} key={id}>{name}</option>)}
+            </select>
+          </label>
+          <label className="min-w-0 text-xs font-semibold text-gray-500 dark:text-gray-400">
+            <span className="mb-1.5 block">{t("staff")}</span>
+            <select value={filters.staffId} onChange={(e) => setFilter("staffId", e.target.value)} className={selectStyle}>
+              <option value="">{t("allStaff")}</option>
+              {staff.map(([id, name]) => <option value={id} key={id}>{name}</option>)}
+            </select>
+          </label>
         </div>
-
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={t("search")}
-            aria-label={t("search")}
-          />
-
-          <div className="space-y-1">
-            <label htmlFor="calendar-jump" className="text-sm">
-              {live("date")}
-            </label>
-            <RentalDatePicker
-              id="calendar-jump"
-              label={live("date")}
-              value={weekStart}
-              clearable={false}
-              onChange={(value) => {
-                if (value) setWeekStart(weekOf(value));
-              }}
-            />
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <div className="min-w-[220px] flex-1">
+            <Input value={filters.search} onChange={(e) => setFilter("search", e.target.value)}
+              placeholder={t("search")} aria-label={t("search")} />
           </div>
-        </div>
-
-        <div className="flex flex-wrap gap-3 text-xs">
-          <span className="rounded-full bg-blue-100 px-3 py-1 text-blue-800 dark:bg-blue-950 dark:text-blue-200">
-            {bookingsT("statuses.RESERVED")}
-          </span>
-          <span className="rounded-full bg-amber-100 px-3 py-1 text-amber-800 dark:bg-amber-950 dark:text-amber-200">
-            {bookingsT("statuses.ISSUED")}
-          </span>
+          {filtered && <Button type="button" size="sm" variant="outline" onClick={() => setFilters(emptyFilters)}>{t("clear")}</Button>}
+          <span className="text-xs text-gray-500 dark:text-gray-400">{t("totalCount", { count })}</span>
         </div>
       </section>
 
-      <p className="text-xs leading-5 text-gray-500">
-        {live("availabilityHint")}
-      </p>
-
-      <div
-        role="region"
-        aria-label={t("title")}
-        tabIndex={0}
-        className="overflow-x-auto rounded-2xl border border-gray-200 bg-white focus-visible:outline-2 dark:border-gray-800 dark:bg-gray-900"
-      >
-        <div className="min-w-[1000px]">
-          <div className="grid border-b border-gray-200 dark:border-gray-800" style={gridStyle}>
-            <div className="sticky left-0 z-20 border-r border-gray-200 bg-gray-50 p-4 text-sm font-semibold dark:border-gray-800 dark:bg-gray-900">
-              {t("equipment")}
-            </div>
-            <div className="grid grid-cols-7">
-              {days.map((day, index) => (
-                <div
-                  key={day}
-                  className={`border-r border-gray-100 px-2 py-4 text-center text-xs dark:border-gray-800 ${
-                    day === today
-                      ? "bg-brand-50 font-bold text-brand-700 dark:bg-brand-950 dark:text-brand-200"
-                      : index >= 5
-                        ? "bg-gray-50 dark:bg-gray-800"
-                        : ""
-                  }`}
-                >
-                  {dayLabel(day)}
-                </div>
-              ))}
+      <section className="space-y-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-[#1b1e21]">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button type="button" variant="outline" size="icon-sm" aria-label={t("previous")}
+              onClick={() => move(-1)}>←</Button>
+            <Button type="button" variant="outline" size="icon-sm" aria-label={t("next")}
+              onClick={() => move(1)}>→</Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => setAnchor(today)}>{t("today")}</Button>
+            <div className="w-38">
+              <RentalDatePicker label={t("jump")} value={anchor} clearable={false} onChange={(value) => { if (value) setAnchor(value); }} />
             </div>
           </div>
-
-          {visible.map((item) => {
-            const entries = item.bookings
-              .filter(intersects)
-              .sort((a, b) => a.startDate.localeCompare(b.startDate));
-
-            const overdue = item.bookings.some(
-              (booking) =>
-                booking.status === "ISSUED" && booking.endDate < today,
-            );
-
-            return (
-              <div
-                key={item.id}
-                className="grid border-b border-gray-100 last:border-0 dark:border-gray-800"
-                style={gridStyle}
-              >
-                <div className="sticky left-0 z-10 border-r border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                  <p className="break-words text-sm font-semibold">
-                    {item.name}
-                  </p>
-                  <p className="mt-1 text-xs text-gray-500">
-                    {item.code} · {item.size}
-                  </p>
-                  <p className="mt-2 text-xs text-gray-500">
-                    {inventory(`statuses.${item.status}`)}
-                  </p>
-                  {overdue && (
-                    <p className="mt-2 text-xs font-medium text-red-600 dark:text-red-400">
-                      {live("overdue")}
-                    </p>
-                  )}
-                </div>
-
-                <div className="relative min-h-28">
-                  <div aria-hidden="true" className="absolute inset-0 grid grid-cols-7">
-                    {days.map((day, index) => (
-                      <div
-                        key={day}
-                        className={`border-r border-gray-100 dark:border-gray-800 ${
-                          index >= 5 ? "bg-gray-50 dark:bg-gray-800/40" : ""
-                        }`}
-                      />
-                    ))}
-                  </div>
-
-                  <div className="relative grid grid-cols-7 gap-y-2 py-4">
-                    {entries.map((entry, index) => {
-                      const start = Math.max(0, offset(weekStart, entry.startDate));
-                      const end = Math.min(6, offset(weekStart, entry.endDate));
-
-                      return (
-                        <button
-                          key={entry.id}
-                          type="button"
-                          onClick={() => setSelectedId(entry.id)}
-                          aria-label={`${entry.customerName}, ${bookingsT(`statuses.${entry.status}`)}, ${formatBookingDate(entry.startDate)} — ${formatBookingDate(entry.endDate)}`}
-                          style={{
-                            gridColumn: `${start + 1} / ${end + 2}`,
-                            gridRow: index + 1,
-                          }}
-                          className={`mx-1 min-w-0 rounded-lg px-2 py-3 text-start focus-visible:outline-2 focus-visible:outline-offset-2 ${
-                            entry.status === "ISSUED"
-                              ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200"
-                              : "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200"
-                          }`}
-                        >
-                          <span className="block truncate text-xs font-semibold">
-                            {entry.customerName}
-                          </span>
-                          <span className="mt-1 block truncate text-xs">
-                            {bookingsT(`statuses.${entry.status}`)}
-                          </span>
-                        </button>
-                      );
-                    })}
-
-                    {entries.length === 0 && (
-                      <p className="col-span-7 p-4 text-xs text-gray-400">
-                        {t("available")}
-                      </p>
-                    )}
-                  </div>
-                </div>
+          <h2 aria-live="polite" className="min-w-0 text-center text-base font-extrabold capitalize tracking-tight sm:text-lg">{periodLabel(anchor, pane, periodMode)}</h2>
+          <div className="flex flex-wrap items-center gap-2">
+            {pane === "calendar" && (
+              <div role="group" aria-label={t("periodModes")} className="flex flex-wrap rounded-xl border border-gray-200 bg-gray-50 p-1 dark:border-gray-700 dark:bg-gray-800">
+                {modes.map((mode) => <button key={mode} type="button" aria-pressed={periodMode === mode}
+                  onClick={() => setPeriodMode(mode)}
+                  className={`rounded-lg px-3 py-2 text-xs font-semibold focus-visible:outline-2 focus-visible:outline-brand-500 ${periodMode === mode
+                    ? "bg-brand-700 text-white shadow-xs dark:bg-brand-400 dark:text-gray-950"
+                    : "text-gray-600 hover:text-brand-700 dark:text-gray-300 dark:hover:text-brand-300"}`}>{t(`modes.${mode}`)}</button>)}
               </div>
-            );
-          })}
-
-          {visible.length === 0 && (
-            <p className="p-10 text-center text-sm text-gray-500">
-              {t("empty")}
-            </p>
-          )}
+            )}
+            <Button type="button" variant="ghost" size="icon-sm" aria-label={t("refresh")}
+              title={t("refresh")} disabled={refreshing} onClick={() => startTransition(() => router.refresh())}>
+              ↻
+            </Button>
+            <Button type="button" size="sm" onClick={() => createOnDay(anchor)}>+ {t("createOnDay")}</Button>
+            <Link href="/bookings" className={buttonVariants({ variant: "outline", size: "sm" })}>{t("rentals")}</Link>
+          </div>
         </div>
-      </div>
+        <div className="flex flex-wrap gap-3 border-t border-gray-100 pt-3 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
+          <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-brand-500" />{bookT("statuses.RESERVED")}</span>
+          <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-sky-500" />{bookT("statuses.ISSUED")}</span>
+          <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-gray-400" />{bookT("statuses.RETURNED")}</span>
+          <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-red-500" />{t("late")}</span>
+        </div>
+        {saved && <p role="status" className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">{t("movedSaved")}</p>}
+        {pane === "calendar" && <CalendarMobile anchor={anchor} today={today} rentals={visibleRentals} mode={periodMode}
+          onDay={setAnchor} onCreate={createOnDay} onRental={setSelectedId} onMove={requestMove} />}
+        {pane === "calendar" && (periodMode === "month" || periodMode === "week") && (
+          <CalendarTimeline anchor={anchor} today={today} rentals={visibleRentals} mode={periodMode}
+            onRental={setSelectedId} onDay={showDay} onCreate={createOnDay} onMove={requestMove} />
+        )}
+        {pane === "calendar" && (periodMode === "day" || periodMode === "agenda") && (
+          <div className="hidden md:block"><CalendarAgenda anchor={anchor} today={today} mode={periodMode} rentals={visibleRentals} onRental={setSelectedId} /></div>
+        )}
+        {pane === "board" && (
+          <CalendarBoard anchor={anchor} today={today} rentals={visibleRentals} onRental={setSelectedId} />
+        )}
+        {pane === "occupancy" && (
+          <CalendarOccupancy anchor={anchor} today={today} rentals={visibleRentals}
+            inventory={visibleInventory} onRental={setSelectedId} />
+        )}
+        {pane === "calendar" && <p className="hidden text-xs leading-5 text-gray-500 dark:text-gray-400 md:block">{t("dragHint")}</p>}
+        <p className="text-xs leading-5 text-gray-500 dark:text-gray-400">{t("dateNote")}</p>
+      </section>
 
-      <p className="text-xs text-gray-500">{t("scrollHint")}</p>
-
-      {visible.length > 0 && !hasBookings && (
-        <p role="status" className="text-sm text-gray-500">
-          {live("noBookings")}
-        </p>
-      )}
-
-      {selected && (
-        <BookingDetails
-          key={selected.id}
-          booking={selected}
-          onClose={() => setSelectedId(null)}
-        />
-      )}
+      {selected && <BookingDetails key={selected.id} booking={selected} onClose={() => setSelectedId(null)} />}
+      {moveTarget && movingRental && <CalendarMoveDialog key={movingRental.id + "-" + moveTarget.startDate}
+        rental={movingRental} initialStart={moveTarget.startDate} onClose={() => setMoveTarget(null)} onSaved={() => setSaved(true)} />}
     </div>
   );
 }

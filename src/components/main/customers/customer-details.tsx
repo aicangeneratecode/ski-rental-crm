@@ -2,81 +2,66 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import type { CustomerRow } from "@/lib/customers/schema";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { formatBookingDate, formatBookingMoney } from "@/lib/bookings/types";
+import { customerRentalBalance, type CustomerListRow } from "@/lib/customers/list-utils";
 
 type Props = {
-  customer: CustomerRow;
+  customer: CustomerListRow;
   onClose: () => void;
   onEdit: () => void;
+  onMerge: () => void;
 };
 
 const tabs = ["overview", "history", "notes"] as const;
 
-export default function CustomerDetails({
-  customer,
-  onClose,
-  onEdit,
-}: Props) {
+export default function CustomerDetails({ customer, onClose, onEdit, onMerge }: Props) {
   const t = useTranslations("customerProfile");
+  const w = useTranslations("customersWorkspace");
+  const bookingT = useTranslations("bookings");
   const [tab, setTab] = useState<(typeof tabs)[number]>("overview");
+  const [showAll, setShowAll] = useState(false);
 
-  const initials = customer.name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toLocaleUpperCase("ru");
+  const initials = customer.name.trim().split(/\s+/).filter(Boolean).slice(0, 2)
+    .map((part) => part[0]).join("").toLocaleUpperCase("ru");
+  const completedTotal = customer.rentals
+    .filter((rental) => rental.status === "RETURNED")
+    .reduce((sum, rental) => sum + rental.total, 0);
+  const shownRentals = showAll ? customer.rentals : customer.rentals.slice(0, 20);
 
   return (
-    <Dialog
-      open
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-    >
-      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-3xl">
-        <DialogHeader>
-          <DialogTitle>{t("open")}</DialogTitle>
-          <DialogDescription>{t("description")}</DialogDescription>
-        </DialogHeader>
+    <Sheet open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <SheetContent side="right" style={{ width: "min(100vw, 680px)", maxWidth: "none" }}
+        className="overflow-y-auto border-[#e9e6e1] dark:border-[#313337] dark:bg-[#1b1e21]">
+        <SheetHeader>
+          <SheetTitle>{t("open")}</SheetTitle>
+          <SheetDescription>{t("description")}</SheetDescription>
+        </SheetHeader>
 
-        <div className="flex items-center gap-4 rounded-2xl bg-gray-50 p-4 dark:bg-gray-800">
-          <div
-            aria-hidden="true"
-            className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-lg font-semibold text-brand-700 dark:bg-brand-950 dark:text-brand-300"
-          >
-            {initials}
-          </div>
+        <div className="flex min-w-0 items-center gap-3 rounded-2xl bg-brand-50/75 p-4 dark:bg-brand-500/10">
+          <div aria-hidden="true" className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-sm font-extrabold text-brand-800 dark:bg-brand-500/20 dark:text-brand-300">{initials}</div>
           <div className="min-w-0">
-            <h2 className="break-words text-lg font-semibold">
-              {customer.name}
-            </h2>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {customer.phone}
+            <h2 className="truncate text-lg font-bold text-gray-900 dark:text-white">{customer.name}</h2>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              {w("customerRef", { id: customer.id.slice(0, 8).toUpperCase() })}
             </p>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-2">
           {tabs.map((value) => (
-            <Button
-              key={value}
-              type="button"
-              size="sm"
+            <Button key={value} type="button" size="sm"
               variant={tab === value ? "default" : "outline"}
-              aria-pressed={tab === value}
-              onClick={() => setTab(value)}
-            >
+              aria-pressed={tab === value} onClick={() => setTab(value)}>
               {t(value)}
             </Button>
           ))}
@@ -85,50 +70,52 @@ export default function CustomerDetails({
         {tab === "overview" && (
           <div className="space-y-5">
             <div className="grid gap-3 sm:grid-cols-3">
-              {(["rentals", "active", "total"] as const).map((key) => (
-                <section
-                  key={key}
-                  className="rounded-xl border border-gray-200 p-4 dark:border-gray-700"
-                >
-                  <h3 className="text-sm text-gray-500">{t(key)}</h3>
-                  <p className="mt-3 font-semibold">{t("unknown")}</p>
-                </section>
-              ))}
+              <section className="rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+                <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">{t("rentals")}</h3>
+                <p className="mt-2 text-2xl font-extrabold tabular-nums text-gray-900 dark:text-white">{customer.completedCount}</p>
+              </section>
+              <section className="rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+                <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">{t("active")}</h3>
+                <p className="mt-2 text-2xl font-extrabold tabular-nums text-gray-900 dark:text-white">{customer.activeCount}</p>
+              </section>
+              <section className="rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+                <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">{t("total")}</h3>
+                <p className="mt-2 text-lg font-extrabold tabular-nums text-gray-900 dark:text-white">{formatBookingMoney(completedTotal)}</p>
+              </section>
             </div>
 
-            <p className="text-xs leading-5 text-gray-500">
-              {t("summaryHint")}
-            </p>
+            <section className="rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+              <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">{w("totalBalance")}</h3>
+              <p className={`mt-2 text-xl font-extrabold tabular-nums ${customer.balance > 0
+                ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-gray-100"}`}>
+                {formatBookingMoney(customer.balance)}
+              </p>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{w("balanceExplanation")}</p>
+            </section>
+
+            {!!customer.aliases?.length && <section className="rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+              <h3 className="text-sm font-semibold">{t("aliasesTitle")}</h3>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t("aliasesHint")}</p>
+              <ul className="mt-3 space-y-1 text-sm">{customer.aliases.map(a=><li key={a.id}>{a.name}{a.phone ? " · "+a.phone : ""}{a.notes&&<span className="block whitespace-pre-wrap break-words text-xs text-gray-500">{a.notes}</span>}</li>)}</ul>
+            </section>}
 
             <section className="rounded-xl border border-gray-200 p-4 dark:border-gray-700">
               <h3 className="font-semibold">{t("contacts")}</h3>
-
               <dl className="mt-4 grid gap-4 sm:grid-cols-2">
-                <div>
+                <div className="min-w-0">
                   <dt className="text-xs text-gray-500">{t("phone")}</dt>
-                  <dd className="mt-1 text-sm">
-                    <a
-                      href={`tel:${customer.phone}`}
-                      className="text-brand-600 hover:underline dark:text-brand-400"
-                    >
-                      {customer.phone}
-                    </a>
+                  <dd className="mt-1 break-all text-sm">
+                    {customer.phone ? (
+                      <a href={`tel:${customer.phone}`} className="text-brand-700 hover:underline dark:text-brand-400">{customer.phone}</a>
+                    ) : t("notSpecified")}
                   </dd>
                 </div>
-
-                <div>
+                <div className="min-w-0">
                   <dt className="text-xs text-gray-500">{t("email")}</dt>
                   <dd className="mt-1 break-all text-sm">
                     {customer.email ? (
-                      <a
-                        href={`mailto:${customer.email}`}
-                        className="text-brand-600 hover:underline dark:text-brand-400"
-                      >
-                        {customer.email}
-                      </a>
-                    ) : (
-                      t("notSpecified")
-                    )}
+                      <a href={`mailto:${customer.email}`} className="text-brand-700 hover:underline dark:text-brand-400">{customer.email}</a>
+                    ) : t("notSpecified")}
                   </dd>
                 </div>
               </dl>
@@ -139,59 +126,68 @@ export default function CustomerDetails({
         {tab === "history" && (
           <section className="space-y-3">
             <h3 className="font-semibold">{t("historyTitle")}</h3>
-            <p className="text-sm text-gray-500">{t("historyHint")}</p>
-
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t("historyHint")}</p>
             <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
-              <table className="w-full min-w-[480px] text-start text-sm">
-                <thead className="bg-gray-50 dark:bg-gray-800">
+              <table className="w-full min-w-[460px] text-sm">
+                <thead className="bg-gray-50 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
                   <tr>
-                    {(["booking", "dates", "status", "amount"] as const).map(
-                      (key) => (
-                        <th
-                          key={key}
-                          scope="col"
-                          className="px-4 py-3 text-start font-medium"
-                        >
-                          {t(key)}
-                        </th>
-                      ),
-                    )}
+                    {(["booking", "dates", "status", "amount"] as const).map((field) => (
+                      <th key={field} scope="col" className="px-3 py-3 text-start text-xs font-semibold">{t(field)}</th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className="px-5 py-10 text-center text-gray-500"
-                    >
-                      {t("historyPlaceholder")}
-                    </td>
-                  </tr>
+                  {shownRentals.map((rental) => (
+                    <tr key={rental.id} className="border-t border-gray-100 dark:border-gray-700">
+                      <td className="px-3 py-3 text-xs font-semibold">#{rental.id.slice(0, 8).toUpperCase()}</td>
+                      <td className="px-3 py-3 text-xs text-gray-500 dark:text-gray-400">
+                        {formatBookingDate(rental.startDate)} — {formatBookingDate(rental.endDate)}
+                      </td>
+                      <td className="px-3 py-3 text-xs">
+                        {bookingT(`statuses.${rental.status}`)}
+                      </td>
+                      <td className="px-3 py-3 text-xs tabular-nums">
+                        {formatBookingMoney(rental.total)}
+                        {customerRentalBalance(rental) > 0 && (
+                          <span className="mt-1 block text-[11px] text-red-600 dark:text-red-400">
+                            {w("balance")}: {formatBookingMoney(customerRentalBalance(rental))}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {customer.rentals.length === 0 && (
+                    <tr><td colSpan={4} className="px-4 py-9 text-center text-sm text-gray-500">{t("historyEmpty")}</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
+            {!showAll && customer.rentals.length > shownRentals.length && (
+              <Button type="button" size="sm" variant="outline" onClick={() => setShowAll(true)}>
+                {w("showAllHistory", { count: customer.rentals.length })}
+              </Button>
+            )}
           </section>
         )}
 
         {tab === "notes" && (
           <section className="space-y-3">
             <h3 className="font-semibold">{t("notes")}</h3>
-            <p className="text-xs text-gray-500">{t("notesHint")}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{t("notesHint")}</p>
             <div className="whitespace-pre-wrap break-words rounded-xl bg-gray-50 p-4 text-sm leading-6 dark:bg-gray-800">
               {customer.notes || t("noNotes")}
             </div>
           </section>
         )}
 
-        <div className="flex flex-wrap justify-end gap-3 border-t border-gray-100 pt-4 dark:border-gray-800">
-          <Button type="button" variant="outline" onClick={onClose}>
-            {t("close")}
-          </Button>
-          <Button type="button" onClick={onEdit}>
-            {t("edit")}
-          </Button>
+        <div className="mt-auto flex flex-wrap justify-end gap-3 border-t border-gray-100 pt-4 dark:border-gray-800">
+          <Button type="button" variant="outline" onClick={onMerge}>{t("merge")}</Button>
+          <Link href={`/bookings?customerId=${customer.id}${customer.rentals[0] ? "&repeat="+customer.rentals[0].id : ""}`}
+            className="inline-flex items-center justify-center rounded-xl border border-brand-300 bg-brand-50 px-4 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-100 dark:border-brand-700 dark:bg-brand-500/10 dark:text-brand-300">{t("repeatBooking")}</Link>
+          <Button type="button" variant="outline" onClick={onClose}>{t("close")}</Button>
+          <Button type="button" onClick={onEdit}>{t("edit")}</Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

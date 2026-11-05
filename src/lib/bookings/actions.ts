@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { getStaffSession } from "@/lib/require-staff";
+import { classifyDatabaseError, logDatabaseError } from "@/lib/db-errors";
 
 import {
   BookingError,
@@ -40,7 +41,8 @@ export async function createBooking(
       return { ok: false, error: error.code };
     }
 
-    return { ok: false, error: "database" };
+    logDatabaseError("createBooking", error);
+    return { ok: false, error: classifyDatabaseError(error) };
   }
 
   revalidatePath("/bookings");
