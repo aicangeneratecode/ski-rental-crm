@@ -16,6 +16,7 @@ export type BookingCustomer = {
       startDate: string;
       endDate: string;
       bookingId?: string;
+      status?: "RESERVED" | "ISSUED";
     }[];
   };
   
