@@ -1,5 +1,5 @@
 "use client";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { flexRender, useTable, type ColumnDef } from "@tanstack/react-table";
 import {
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import DeleteRecordButton from "@/components/common/delete-record-button";
 import { formatRsd } from "@/lib/equipment/tariffs";
 import type { EquipmentRow } from "@/lib/equipment/types";
+import { sortEquipmentRows, toggleEquipmentSort, type EquipmentSort, type EquipmentSortKey } from "@/lib/equipment/sort";
 interface EquipmentTableProps {
   rows: EquipmentRow[];
   onEdit: (item: EquipmentRow) => void;
@@ -27,6 +28,12 @@ export default function EquipmentTable({
 }: EquipmentTableProps) {
   const t = useTranslations("inventory");
   const profileT = useTranslations("equipmentProfile");
+  const [sort, setSort] = useState<EquipmentSort>(null);
+  const sortedRows = useMemo(() => sortEquipmentRows(rows, sort, {
+    tariff: (value) => t(`tariffs.${value}`),
+    status: (value) => t(`statuses.${value}`),
+  }), [rows, sort, t]);
+  const sortableColumns: readonly string[] = ["name", "tariff", "size", "dailyRate", "status"];
   const columns = useMemo<ColumnDef<Record<string, never>, EquipmentRow>[]>(
     () => [
       { accessorKey: "code", header: t("fields.code") },
@@ -97,7 +104,7 @@ export default function EquipmentTable({
   );
   const table = useTable({
     features: {},
-    data: rows,
+    data: sortedRows,
     columns,
   });
   return (
@@ -110,12 +117,30 @@ export default function EquipmentTable({
                 <TableCell
                   isHeader
                   key={header.id}
+                  aria-sort={sort?.key === header.column.id
+                    ? sort.direction === "asc" ? "ascending" : "descending"
+                    : undefined}
                   className="border-b border-gray-200 px-4 py-3 text-start text-xs font-medium whitespace-nowrap text-gray-500 dark:border-gray-800 dark:text-gray-400"
                 >
-                  {flexRender(
-                    header.column.columnDef.header,
-                    header.getContext(),
-                  )}
+                  {sortableColumns.includes(header.column.id) ? (
+                    <button
+                      type="button"
+                      onClick={() => setSort((current) => toggleEquipmentSort(current, header.column.id as EquipmentSortKey))}
+                      aria-label={t("sortByColumn", {
+                        column: typeof header.column.columnDef.header === "string"
+                          ? header.column.columnDef.header
+                          : header.column.id,
+                      })}
+                      className={`inline-flex min-h-8 items-center gap-2 rounded-lg px-1.5 text-start font-semibold transition-colors hover:bg-gray-100 hover:text-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 dark:hover:bg-gray-800 dark:hover:text-brand-300 ${sort?.key === header.column.id ? "text-brand-700 dark:text-brand-300" : ""}`}
+                    >
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                      <span aria-hidden="true" className={sort?.key === header.column.id ? "text-brand-600 dark:text-brand-400" : "text-gray-400"}>
+                        {sort?.key === header.column.id
+                          ? sort.direction === "asc" ? "↑" : "↓"
+                          : "↕"}
+                      </span>
+                    </button>
+                  ) : flexRender(header.column.columnDef.header, header.getContext())}
                 </TableCell>
               ))}
             </TableRow>
