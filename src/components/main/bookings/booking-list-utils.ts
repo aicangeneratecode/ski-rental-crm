@@ -1,8 +1,8 @@
 import { getTodayKind } from "@/lib/bookings/today";
 import type { BookingRow } from "@/lib/bookings/types";
 
-export type RentalRow = BookingRow & { netPaid: number; createdAt: string };
-export type RentalView = "all" | "pickup" | "return" | "active" | "attention" | "balance" | "reserved" | "returned" | "cancelled";
+export type RentalRow = BookingRow & { netPaid: number; createdAt: string; archivedAt?: string | null };
+export type RentalView = "all" | "pickup" | "return" | "active" | "attention" | "balance" | "reserved" | "returned" | "cancelled" | "archived";
 export type RentalSort = "priority" | "newest" | "startAsc" | "startDesc" | "endAsc" | "endDesc" | "nameAsc" | "amountDesc" | "balanceDesc";
 export type RentalFilters = {
   view: RentalView; query: string; from: string; to: string;
@@ -28,6 +28,8 @@ export function rentalPriority(row: RentalRow, today: string): number {
   return 7;
 }
 export function matchesRentalView(row: RentalRow, view: RentalView, today: string): boolean {
+  if (view === "archived") return Boolean(row.archivedAt);
+  if (row.archivedAt) return false;
   const kind = getTodayKind(row, today);
   switch (view) {
     case "pickup": return kind === "pickup";
