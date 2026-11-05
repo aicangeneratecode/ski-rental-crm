@@ -53,7 +53,7 @@ export async function updateTariffRate(
           where: { code: input.code },
           select: { rate: true, version: true },
         });
-        if (previous?.version ?? 0 !== input.version) {
+        if ((previous?.version ?? 0) !== input.version) {
           throw new TariffUpdateError("conflict");
         }
         if (previous) {
