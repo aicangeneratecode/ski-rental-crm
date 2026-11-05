@@ -37,7 +37,7 @@ export default function EquipmentQrLabel({id,code,name,size}:{
         placeholder={origin || "https://crm.example.com"}/>
     </label>
     <p className="text-xs text-gray-500 dark:text-gray-400">{t("addressHint")}</p>
-    {base && /^(localhost|127\\.0\\.0\\.1)$/.test(new URL(base).hostname) &&
+    {base && /^(localhost|127\.0\.0\.1)$/.test(new URL(base).hostname) &&
       <p role="note" className="text-xs text-amber-700 dark:text-amber-400">{t("localhostWarning")}</p>}
     <div id="topride-print-label" className="mx-auto w-full max-w-[310px] rounded-2xl border border-gray-300 bg-white p-5 text-center text-gray-950">
       <p className="text-sm font-black tracking-[0.18em]">TOP RIDE</p>
