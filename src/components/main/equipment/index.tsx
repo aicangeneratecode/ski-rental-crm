@@ -13,13 +13,15 @@ import SelectField from "./select-field";
 interface EquipmentCatalogProps {
   rows: EquipmentRow[];
   readOnly: boolean;
+  initialSelectedId?: string;
 }
 export default function EquipmentCatalog({
   rows,
   readOnly,
+  initialSelectedId,
 }: EquipmentCatalogProps) {
   const t = useTranslations("inventory");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId && rows.some(r=>r.id===initialSelectedId)?initialSelectedId:null);
 const selectedItem = rows.find((row) => row.id === selectedId);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
