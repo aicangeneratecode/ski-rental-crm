@@ -72,3 +72,24 @@ test("amount sorting is deterministic", () => {
   const sorted = filterRentals([base, expensive], { ...filters, sort: "amountDesc" }, today);
   assert.deepEqual(sorted.map((row) => row.id), ["expensive", "booking-a"]);
 });
+
+
+test("archived rentals remain accessible only via archive view", () => {
+  const archived = withChanges({
+    id: "archived",
+    status: "RETURNED",
+    archivedAt: "2026-11-05T09:00:00.000Z",
+  });
+  assert.equal(matchesRentalView(archived, "archived", today), true);
+  assert.equal(matchesRentalView(archived, "all", today), false);
+  assert.equal(matchesRentalView(archived, "returned", today), false);
+  assert.equal(matchesRentalView(base, "archived", today), false);
+  assert.deepEqual(
+    filterRentals([archived, base], { ...filters, view: "all" }, today).map((row) => row.id),
+    ["booking-a"],
+  );
+  assert.deepEqual(
+    filterRentals([archived, base], { ...filters, view: "archived" }, today).map((row) => row.id),
+    ["archived"],
+  );
+});
