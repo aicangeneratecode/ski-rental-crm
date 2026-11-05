@@ -6,6 +6,7 @@ import { getDb } from "@/lib/db";
 import { createBookingRecord } from "@/lib/bookings/repository";
 import { savePaymentRecord } from "@/lib/payments/repository";
 import { loadReportData, parseReportPeriod } from "@/lib/reports/report-data";
+import { loadLedgerPage, normalizeLedgerFilters } from "@/lib/reports/ledger";
 import { readTariffRates, updateTariffRate, TariffUpdateError } from "@/lib/equipment/tariff-settings";
 import { readWorkspaceSettings, writeWorkspaceSettings, WorkspaceError } from "@/lib/settings/workspace";
 
@@ -61,6 +62,35 @@ test("real PostgreSQL: Belgrade payment dates, refunds, retained tariff pricing 
     assert.equal(report.categories.find(row=>row.tariff==="ski-premium")?.unitDays,1);
     assert.equal(report.popular.find(row=>row.equipmentId===skiId)?.bookings,1);
 
+    const ledgerFilters=normalizeLedgerFilters({
+      kind:"PAYMENT",method:"CASH",query:"Report fixture",
+    });
+    const first=await loadLedgerPage(period,ledgerFilters);
+    assert.equal(first.rows.length,1);
+    assert.equal(first.rows[0].id,paymentId);
+    assert.equal(first.rows[0].employeeName,"Phase 5 reports");
+
+    // >50 records exercises keyset cursor paging and server-side kind filtering.
+    await db.payment.createMany({data:Array.from({length:51},(_,i)=>({
+      bookingId:skiBooking,createdById:actor,requestId:randomUUID(),
+      kind:"PAYMENT" as const,method:"CASH" as const,amount:1,note:"ledger paging",
+      createdAt:new Date(Date.parse("2027-02-10T09:00:00.000Z")-i*60_000),
+    }))});
+    const ledgerA=await loadLedgerPage(period,ledgerFilters);
+    assert.equal(ledgerA.rows.length,50);
+    assert.equal(ledgerA.hasMore,true);
+    assert.ok(ledgerA.nextCursor);
+    const ledgerB=await loadLedgerPage(period,{...ledgerFilters,cursor:ledgerA.nextCursor!});
+    assert.equal(ledgerB.rows.length,2);
+    assert.equal(ledgerB.hasMore,false);
+    assert.equal(new Set([...ledgerA.rows,...ledgerB.rows].map(row=>row.id)).size,52);
+    const refunds=await loadLedgerPage(period,normalizeLedgerFilters({
+      kind:"REFUND",query:"Report fixture",
+    }));
+    assert.equal(refunds.rows.length,1);
+    assert.equal(refunds.rows[0].id,refundId);
+
+
     const initial=(await readTariffRates()).find(row=>row.code==="helmet");
     assert.ok(initial);
     assert.equal(initial.version,0);
@@ -101,7 +131,7 @@ test("real PostgreSQL: Belgrade payment dates, refunds, retained tariff pricing 
       (e:unknown)=>e instanceof WorkspaceError && e.code==="conflict",
     );
   }finally{
-    if(payments.length)await db.payment.deleteMany({where:{id:{in:payments}}});
+    if(bookings.length)await db.payment.deleteMany({where:{bookingId:{in:bookings}}});
     if(bookings.length) {
       const where={bookingId:{in:bookings}};
       await db.bookingEvent.deleteMany({where});
