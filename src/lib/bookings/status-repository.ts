@@ -108,7 +108,7 @@ export async function changeBookingStatusRecord(
             actorId: staffId,
             bookingId: id,
             kind: action === "issue" ? "CHECK_OUT" as const : "CHECK_IN" as const,
-            condition: action === "issue" ? "OK" : "NEEDS_SERVICE",
+            condition: action === "issue" ? "OK" : "",
             note: action === "return" ? "Возврат принят. Требуется осмотр перед новой выдачей." : "",
           })),
         });
