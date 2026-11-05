@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import { qrMatrix } from "@/lib/equipment/qr-code";
 
@@ -8,8 +8,7 @@ export default function EquipmentQrLabel({id,code,name,size}:{
   id:string;code:string;name:string;size:string;
 }) {
   const t=useTranslations("equipmentQr");
-  const [origin,setOrigin]=useState("");
-  useEffect(()=>{setOrigin(window.location.origin)},[]);
+  const origin=useSyncExternalStore(()=>()=>{},()=>window.location.origin,()=>"");
   const url=origin?origin+"/q/"+id:"";
   const result=useMemo(()=>{
     if(!url)return null;
