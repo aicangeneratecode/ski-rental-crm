@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,11 +19,12 @@ type Props = {
   customer: CustomerListRow;
   onClose: () => void;
   onEdit: () => void;
+  onMerge: () => void;
 };
 
 const tabs = ["overview", "history", "notes"] as const;
 
-export default function CustomerDetails({ customer, onClose, onEdit }: Props) {
+export default function CustomerDetails({ customer, onClose, onEdit, onMerge }: Props) {
   const t = useTranslations("customerProfile");
   const w = useTranslations("customersWorkspace");
   const bookingT = useTranslations("bookings");
@@ -90,6 +92,12 @@ export default function CustomerDetails({ customer, onClose, onEdit }: Props) {
               </p>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{w("balanceExplanation")}</p>
             </section>
+
+            {!!customer.aliases?.length && <section className="rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+              <h3 className="text-sm font-semibold">{t("aliasesTitle")}</h3>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t("aliasesHint")}</p>
+              <ul className="mt-3 space-y-1 text-sm">{customer.aliases.map(a=><li key={a.id}>{a.name}{a.phone ? " · "+a.phone : ""}{a.notes&&<span className="block whitespace-pre-wrap break-words text-xs text-gray-500">{a.notes}</span>}</li>)}</ul>
+            </section>}
 
             <section className="rounded-xl border border-gray-200 p-4 dark:border-gray-700">
               <h3 className="font-semibold">{t("contacts")}</h3>
@@ -173,6 +181,9 @@ export default function CustomerDetails({ customer, onClose, onEdit }: Props) {
         )}
 
         <div className="mt-auto flex flex-wrap justify-end gap-3 border-t border-gray-100 pt-4 dark:border-gray-800">
+          <Button type="button" variant="outline" onClick={onMerge}>{t("merge")}</Button>
+          <Link href={`/bookings?customerId=${customer.id}${customer.rentals[0] ? "&repeat="+customer.rentals[0].id : ""}`}
+            className="inline-flex items-center justify-center rounded-xl border border-brand-300 bg-brand-50 px-4 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-100 dark:border-brand-700 dark:bg-brand-500/10 dark:text-brand-300">{t("repeatBooking")}</Link>
           <Button type="button" variant="outline" onClick={onClose}>{t("close")}</Button>
           <Button type="button" onClick={onEdit}>{t("edit")}</Button>
         </div>
