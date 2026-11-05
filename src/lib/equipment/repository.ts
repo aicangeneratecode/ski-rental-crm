@@ -10,6 +10,28 @@ export async function saveEquipmentRecord(input: unknown): Promise<SaveResult> {
   try {
     const db = getDb();
     if (id) {
+      const current = await db.equipment.findUnique({
+        where: { id },
+        select: { status: true, version: true },
+      });
+      if (!current || current.version !== version) return { ok: false, error: "conflict" };
+      if (values.status !== "READY" && current.status !== values.status) {
+        const issued = await db.bookingItem.findFirst({
+          where: { equipmentId: id, booking: { status: "ISSUED" } },
+          select: { id: true },
+        });
+        if (issued) return { ok: false, error: "issued" };
+      }
+      if (values.status === "READY" && current.status !== "READY") {
+        const latest = await db.equipmentMaintenance.findFirst({
+          where: { equipmentId: id },
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          select: { kind: true, condition: true },
+        });
+        if (current.status === "MAINTENANCE" || latest && latest.condition !== "OK") {
+          return { ok: false, error: "inspectionRequired" };
+        }
+      }
       const updated = await db.equipment.updateMany({
         where: { id, version },
         data: { ...values, version: { increment: 1 } },
