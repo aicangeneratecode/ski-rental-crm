@@ -461,7 +461,8 @@
     "changeCustomer": "Изменить",
     "selectedEquipmentTitle": "Снаряжение в брони",
     "removeSelectedEquipment": "Убрать из брони: {name}",
-    "removeEquipment": "Убрать"
+    "removeEquipment": "Убрать",
+    "customerShortId": "№ {id}"
   },
   "sidebar": {
     "groups": {
