@@ -44,6 +44,8 @@ type Props = {
   onSaved: () => void;
   booking?: RentalRow;
   editMode?: "edit" | "extend";
+  initialCustomerId?: string;
+  repeatFrom?: RentalRow;
 };
 
 export default function BookingForm({
@@ -53,11 +55,13 @@ export default function BookingForm({
   onSaved,
   booking,
   editMode = "edit",
+  initialCustomerId,
+  repeatFrom,
 }: Props) {
   const t = useTranslations("bookings");
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const [customerQuery, setCustomerQuery] = useState(booking?.customerName ?? "");
+  const [customerQuery, setCustomerQuery] = useState(booking?.customerName ?? customers.find(c=>c.id===initialCustomerId)?.name ?? "");
   const [category, setCategory] = useState("all");
   const [kit, setKit] = useState<RentalKitId | null>(null);
   const [discountMode, setDiscountMode] = useState<"percent" | "fixed">(booking && booking.discountPercent === 0 && booking.discountAmount > 0 ? "fixed" : "percent");
@@ -76,7 +80,7 @@ export default function BookingForm({
   } = useForm<CreateBookingInput>({
     resolver: zodResolver(createBookingSchema),
     defaultValues: {
-      customerId: booking?.customerId ?? "",
+      customerId: booking?.customerId ?? initialCustomerId ?? "",
       startDate: booking?.startDate ?? "",
       endDate: booking?.endDate ?? "",
       travelDay: booking?.travelDay ?? false,
@@ -86,7 +90,7 @@ export default function BookingForm({
       items: booking?.items.filter((item) => Boolean(item.equipmentId)).map((item) => ({
         equipmentId: item.equipmentId!,
         complimentary: item.complimentary,
-      })) ?? [],
+      })) ?? repeatFrom?.items.filter(item => Boolean(item.equipmentId) && equipment.some(e=>e.id===item.equipmentId && (e.status===undefined||e.status==="READY"))).map(item=>({equipmentId:item.equipmentId!,complimentary:false})) ?? [],
     },
   });
 
@@ -221,8 +225,8 @@ export default function BookingForm({
         className="max-h-[90dvh] overflow-y-auto sm:max-w-3xl"
       >
         <DialogHeader>
-          <DialogTitle>{t(booking ? extending ? "extendBooking" : "editBooking" : "add")}</DialogTitle>
-          <DialogDescription>{t(booking ? issued ? "issuedEditHint" : "reservedEditHint" : "formHint")}</DialogDescription>
+          <DialogTitle>{t(booking ? extending ? "extendBooking" : "editBooking" : repeatFrom ? "repeatBooking" : "add")}</DialogTitle>
+          <DialogDescription>{t(booking ? issued ? "issuedEditHint" : "reservedEditHint" : repeatFrom ? "repeatBookingHint" : "formHint")}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={submit} noValidate className="space-y-5">
