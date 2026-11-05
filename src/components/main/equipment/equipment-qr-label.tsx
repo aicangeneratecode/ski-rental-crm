@@ -40,11 +40,11 @@ export default function EquipmentQrLabel({id,code,name,size}:{
       className="w-full rounded-xl bg-brand-600 px-4 py-3 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-40">
       {t("print")}
     </button>
-    <style>{\`@media print {
+    <style>{`@media print {
       body * {visibility:hidden!important}
       #topride-print-label, #topride-print-label * {visibility:visible!important}
       #topride-print-label {position:fixed;left:10mm;top:10mm;width:65mm!important;padding:4mm!important;box-shadow:none!important;border:1px solid #ddd!important}
       @page {size:auto;margin:0}
-    }\`}</style>
+    }`}</style>
   </div>;
 }
