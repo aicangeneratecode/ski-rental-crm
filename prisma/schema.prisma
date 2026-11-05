@@ -211,6 +211,8 @@ enum BookingEventKind {
   CANCELLED
   ARCHIVED
   RESTORED
+  UPDATED
+  EXTENDED
 }
 
 model BookingEvent {
@@ -220,6 +222,7 @@ model BookingEvent {
   actorId String
   actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
   kind BookingEventKind
+  details String @default("") @db.VarChar(2000)
   bookingVersion Int
   createdAt DateTime @default(now())
   @@unique([bookingId, bookingVersion])
