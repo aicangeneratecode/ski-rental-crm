@@ -8,7 +8,7 @@ import { formatBookingDate, formatBookingMoney } from "@/lib/bookings/types";
 import BookingActions from "./booking-actions";
 import { rentalBalance, type RentalRow } from "./booking-list-utils";
 
-type Props = { row: RentalRow; today: string; compact: boolean; onOpen: (id: string) => void };
+type Props = { row: RentalRow; today: string; compact: boolean; onOpen: (id: string) => void; onEdit: (id: string, mode: "edit" | "extend") => void };
 
 const statusTone: Record<RentalRow["status"], string> = {
   RESERVED: "bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-300",
@@ -26,7 +26,7 @@ function lateDays(endDate: string, today: string) {
   return Math.max(0, Math.round((Date.parse(today + "T00:00:00Z") - Date.parse(endDate + "T00:00:00Z")) / 86_400_000));
 }
 
-export default function BookingRentalCard({ row, today, compact, onOpen }: Props) {
+export default function BookingRentalCard({ row, today, compact, onOpen, onEdit }: Props) {
   const t = useTranslations("bookings");
   const paymentT = useTranslations("bookingPaymentList");
   const kind = getTodayKind(row, today);
@@ -109,7 +109,13 @@ export default function BookingRentalCard({ row, today, compact, onOpen }: Props
       </div>
       <div className={`flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 bg-gray-50/45 px-4 dark:border-gray-800 dark:bg-white/2 ${compact ? "py-1.5" : "py-2.5"}`}>
         <BookingActions key={`${row.id}-${row.version}`} booking={row} compact />
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {!isArchived && (row.status === "RESERVED" || row.status === "ISSUED") && (
+            <>
+              {row.status === "RESERVED" && <Button type="button" size="sm" variant="ghost" onClick={() => onEdit(row.id, "edit")}>{t("editBooking")}</Button>}
+              <Button type="button" size="sm" variant="outline" onClick={() => onEdit(row.id, "extend")}>{t("extendBooking")}</Button>
+            </>
+          )}
           {(row.status === "RETURNED" || row.status === "CANCELLED") && (
             <ArchiveBookingButton id={row.id} version={row.version} archived={isArchived} label={t("reference", { id: row.id.slice(0, 8).toUpperCase() })} />
           )}
