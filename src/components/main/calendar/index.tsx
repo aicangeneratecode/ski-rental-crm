@@ -11,6 +11,8 @@ import type { CalendarFilters, CalendarInventory, CalendarRental } from "./calen
 import { addDays, applyCalendarFilters, endOfMonth, formatFullDay, formatMonth, formatShortDate,
   overlaps, shiftMonth, startOfMonth, startOfWeek } from "./calendar-utils";
 import CalendarTimeline from "./calendar-timeline";
+import CalendarMobile from "./calendar-mobile";
+import CalendarMoveDialog from "./calendar-move-dialog";
 import { CalendarAgenda, CalendarBoard, CalendarOccupancy } from "./calendar-views";
 
 type Props = { rentals: CalendarRental[]; inventory: CalendarInventory[]; today: string };
@@ -51,6 +53,8 @@ export default function RentalCalendar({ rentals, inventory, today }: Props) {
   const [periodMode, setPeriodMode] = useState<PeriodMode>("month");
   const [filters, setFilters] = useState<CalendarFilters>(emptyFilters);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [moveTarget, setMoveTarget] = useState<{ id: string; startDate: string } | null>(null);
+  const [saved, setSaved] = useState(false);
   const [refreshing, startTransition] = useTransition();
 
   const visibleRentals = useMemo(() => applyCalendarFilters(rentals, filters), [rentals, filters]);
@@ -66,6 +70,7 @@ export default function RentalCalendar({ rentals, inventory, today }: Props) {
   const staff = useMemo(() => [...new Map(rentals.map((r) => [r.createdById, r.createdByName])).entries()]
     .sort((a, b) => a[1].localeCompare(b[1], "ru")), [rentals]);
   const selected = rentals.find((rental) => rental.id === selectedId);
+  const movingRental = rentals.find((rental) => rental.id === moveTarget?.id && rental.status === "RESERVED");
   const [scopeStart, scopeEnd] = rentalScope(anchor, pane, periodMode);
   const count = visibleRentals.filter((rental) => overlaps(rental, scopeStart, scopeEnd)).length;
   const filtered = Object.values(filters).some(Boolean);
@@ -80,6 +85,15 @@ export default function RentalCalendar({ rentals, inventory, today }: Props) {
       setAnchor((current) => addDays(current, direction * 7));
     } else {
       setAnchor((current) => addDays(current, direction));
+    }
+  }
+  function createOnDay(day: string) {
+    router.push(`/bookings?startDate=${day}&endDate=${day}`);
+  }
+  function requestMove(id: string, date: string) {
+    if (rentals.some(r => r.id === id && r.status === "RESERVED")) {
+      setSaved(false);
+      setMoveTarget({ id, startDate: date });
     }
   }
   function showDay(day: string) {
@@ -176,6 +190,7 @@ export default function RentalCalendar({ rentals, inventory, today }: Props) {
               title={t("refresh")} disabled={refreshing} onClick={() => startTransition(() => router.refresh())}>
               ↻
             </Button>
+            <Button type="button" size="sm" onClick={() => createOnDay(anchor)}>+ {t("createOnDay")}</Button>
             <Link href="/bookings" className={buttonVariants({ variant: "outline", size: "sm" })}>{t("rentals")}</Link>
           </div>
         </div>
@@ -185,12 +200,15 @@ export default function RentalCalendar({ rentals, inventory, today }: Props) {
           <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-gray-400" />{bookT("statuses.RETURNED")}</span>
           <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-red-500" />{t("late")}</span>
         </div>
+        {saved && <p role="status" className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">{t("movedSaved")}</p>}
+        {pane === "calendar" && <CalendarMobile anchor={anchor} today={today} rentals={visibleRentals} mode={periodMode}
+          onDay={setAnchor} onCreate={createOnDay} onRental={setSelectedId} onMove={requestMove} />}
         {pane === "calendar" && (periodMode === "month" || periodMode === "week") && (
           <CalendarTimeline anchor={anchor} today={today} rentals={visibleRentals} mode={periodMode}
-            onRental={setSelectedId} onDay={showDay} />
+            onRental={setSelectedId} onDay={showDay} onCreate={createOnDay} onMove={requestMove} />
         )}
         {pane === "calendar" && (periodMode === "day" || periodMode === "agenda") && (
-          <CalendarAgenda anchor={anchor} today={today} mode={periodMode} rentals={visibleRentals} onRental={setSelectedId} />
+          <div className="hidden md:block"><CalendarAgenda anchor={anchor} today={today} mode={periodMode} rentals={visibleRentals} onRental={setSelectedId} /></div>
         )}
         {pane === "board" && (
           <CalendarBoard anchor={anchor} today={today} rentals={visibleRentals} onRental={setSelectedId} />
@@ -199,10 +217,13 @@ export default function RentalCalendar({ rentals, inventory, today }: Props) {
           <CalendarOccupancy anchor={anchor} today={today} rentals={visibleRentals}
             inventory={visibleInventory} onRental={setSelectedId} />
         )}
+        {pane === "calendar" && <p className="hidden text-xs leading-5 text-gray-500 dark:text-gray-400 md:block">{t("dragHint")}</p>}
         <p className="text-xs leading-5 text-gray-500 dark:text-gray-400">{t("dateNote")}</p>
       </section>
 
       {selected && <BookingDetails key={selected.id} booking={selected} onClose={() => setSelectedId(null)} />}
+      {moveTarget && movingRental && <CalendarMoveDialog key={movingRental.id + "-" + moveTarget.startDate}
+        rental={movingRental} initialStart={moveTarget.startDate} onClose={() => setMoveTarget(null)} onSaved={() => setSaved(true)} />}
     </div>
   );
 }
