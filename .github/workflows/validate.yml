@@ -7,6 +7,24 @@ on:
 jobs:
   checks:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: rental_ci
+          POSTGRES_PASSWORD: test_ci_password
+          POSTGRES_DB: rental_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rental_ci -d rental_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      DATABASE_URL: postgresql://rental_ci:test_ci_password@localhost:5432/rental_ci
+      BETTER_AUTH_URL: http://localhost:3000
+      BETTER_AUTH_SECRET: ci-only-not-for-production-secret-123456
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -17,19 +35,19 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
-        env:
-          DATABASE_URL: postgresql://test:test@localhost:5432/test
       - name: Type check
         run: npx tsc --noEmit
       - name: Lint
         run: npm run lint
       - name: Unit tests
         run: npm test
+      - name: Apply migrations to disposable PostgreSQL
+        run: npm run db:setup
+      - name: Database integration tests
+        run: npm run test:db
+        env:
+          CI_TEST_DATABASE_URL: "1"
       - name: Verify import preview without database writes
         run: npm run import:legacy -- --file scripts/fixtures/legacy-import-demo.json --validate-only
       - name: Build
         run: npm run build
-        env:
-          DATABASE_URL: postgresql://test:test@localhost:5432/test
-          BETTER_AUTH_URL: http://localhost:3000
-          BETTER_AUTH_SECRET: ci-only-please-replace-in-production-123456
