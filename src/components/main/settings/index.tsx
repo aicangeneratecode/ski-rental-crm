@@ -12,7 +12,7 @@ import TariffEditor from "./tariff-editor";
 import WorkspaceForm from "./workspace-form";
 
 const tabs = ["tariffs", "benefits", "rental", "contacts"] as const;
-const surface = "rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-[#1b1e21]";
+const surface = "topride-surface rounded-2xl border p-4 sm:p-5";
 
 export default function SettingsPanel({
   rates, settings,
