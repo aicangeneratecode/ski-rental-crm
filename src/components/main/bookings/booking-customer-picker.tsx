@@ -103,7 +103,7 @@ export default function BookingCustomerPicker({
             >
               <span className="truncate text-sm font-semibold">{customer.name}</span>
               <span className="truncate text-xs text-gray-500 dark:text-gray-400">
-                {customer.phone || t("customerNoPhone")}
+                {customer.phone || `${t("customerNoPhone")} · ${t("customerShortId", { id: customer.id.slice(0, 8).toUpperCase() })}`}
               </span>
             </button>
           ))}
