@@ -13,6 +13,7 @@ export type CustomerRental = {
 export type CustomerListRow = CustomerRow & {
   createdAt: string;
   rentals: CustomerRental[];
+  aliases?: { id: string; name: string; phone: string; notes: string }[];
   rentalCount: number;
   activeCount: number;
   completedCount: number;
