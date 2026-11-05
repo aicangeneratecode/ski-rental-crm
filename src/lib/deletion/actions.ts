@@ -7,10 +7,9 @@ import { Prisma } from "@/generated/prisma/client";
 import { getDb } from "@/lib/db";
 import { classifyDatabaseError, logDatabaseError } from "@/lib/db-errors";
 import { getStaffSession } from "@/lib/require-staff";
-import { isDeletableBookingStatus } from "./policy";
 
 const deleteRecordSchema = z.object({
-  kind: z.enum(["customer", "equipment", "booking"]),
+  kind: z.enum(["customer", "equipment"]),
   id: z.uuid(),
   version: z.number().int().positive(),
 });
@@ -23,7 +22,6 @@ export type DeleteRecordError =
   | "conflict"
   | "linkedCustomer"
   | "linkedEquipment"
-  | "activeBooking"
   | "schemaOutdated"
   | "databaseUnavailable"
   | "database";
@@ -83,23 +81,7 @@ export async function deleteRecord(input: unknown): Promise<DeleteRecordResult> 
           return;
         }
 
-        const booking = await tx.booking.findUnique({
-          where: { id },
-          select: { version: true, status: true },
-        });
-        if (!booking) reject("notFound");
-        if (booking.version !== version) reject("conflict");
-        if (!isDeletableBookingStatus(booking.status)) reject("activeBooking");
 
-        // Delete the complete closed-booking record atomically. This erases
-        // its payments and audit events; the confirmation UI warns explicitly.
-        await tx.payment.deleteMany({ where: { bookingId: id } });
-        await tx.bookingEvent.deleteMany({ where: { bookingId: id } });
-        await tx.bookingItem.deleteMany({ where: { bookingId: id } });
-        const removed = await tx.booking.deleteMany({
-          where: { id, version, status: { in: ["RETURNED", "CANCELLED"] } },
-        });
-        if (removed.count !== 1) reject("conflict");
       },
       {
         isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
@@ -113,8 +95,7 @@ export async function deleteRecord(input: unknown): Promise<DeleteRecordResult> 
       if (error.code === "P2003") {
         return {
           ok: false,
-          error: kind === "customer" ? "linkedCustomer"
-            : kind === "equipment" ? "linkedEquipment" : "conflict",
+          error: kind === "customer" ? "linkedCustomer" : "linkedEquipment",
         };
       }
       if (error.code === "P2034") return { ok: false, error: "conflict" };
