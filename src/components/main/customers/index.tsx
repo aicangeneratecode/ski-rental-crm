@@ -17,6 +17,7 @@ import {
 import CustomerDetails from "./customer-details";
 import CustomerForm from "./customer-form";
 import CustomerListItem from "./customer-list-item";
+import CustomerMergeDialog from "./customer-merge-dialog";
 
 interface CustomersProps {
   rows: CustomerListRow[];
@@ -34,6 +35,7 @@ export default function Customers({ rows }: CustomersProps) {
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editing, setEditing] = useState<CustomerListRow | "new" | null>(null);
+  const [merging, setMerging] = useState<CustomerListRow | null>(null);
   const [saved, setSaved] = useState(false);
   const [refreshing, startTransition] = useTransition();
   const [query, setQuery] = useState("");
@@ -180,8 +182,11 @@ export default function Customers({ rows }: CustomersProps) {
 
       {selectedCustomer && (
         <CustomerDetails key={selectedCustomer.id} customer={selectedCustomer} onClose={() => setSelectedId(null)}
-          onEdit={() => { startEdit(selectedCustomer); setSelectedId(null); }} />
+          onEdit={() => { startEdit(selectedCustomer); setSelectedId(null); }}
+          onMerge={() => { setMerging(selectedCustomer); setSelectedId(null); }} />
       )}
+      {merging && <CustomerMergeDialog key={merging.id} source={merging} customers={rows}
+        onClose={() => setMerging(null)} onMerged={() => setSaved(true)} />}
       {editing && (
         <CustomerForm key={editing === "new" ? "new" : `${editing.id}-${editing.version}`}
           item={editing === "new" ? undefined : editing}
