@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { Prisma } from "@/generated/prisma/client";
 import { getDb } from "@/lib/db";
+import { classifyDatabaseError, logDatabaseError } from "@/lib/db-errors";
 import { getStaffSession } from "@/lib/require-staff";
 import { isDeletableBookingStatus } from "./policy";
 
@@ -23,6 +24,8 @@ export type DeleteRecordError =
   | "linkedCustomer"
   | "linkedEquipment"
   | "activeBooking"
+  | "schemaOutdated"
+  | "databaseUnavailable"
   | "database";
 export type DeleteRecordResult =
   | { ok: true }
@@ -116,7 +119,8 @@ export async function deleteRecord(input: unknown): Promise<DeleteRecordResult> 
       }
       if (error.code === "P2034") return { ok: false, error: "conflict" };
     }
-    return { ok: false, error: "database" };
+    logDatabaseError("deleteRecord", error);
+    return { ok: false, error: classifyDatabaseError(error) };
   }
 
   for (const path of ["/customers", "/equipment", "/bookings", "/calendar", "/"]) {
