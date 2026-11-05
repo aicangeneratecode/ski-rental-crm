@@ -24,11 +24,12 @@ import BookingPayments from "./booking-payments";
 type Props = {
   booking: BookingRow;
   onClose: () => void;
+  onEdit?: (id: string, mode: "edit" | "extend") => void;
 };
 
 const tabs = ["overview", "payment", "history"] as const;
 
-export default function BookingDetails({ booking, onClose }: Props) {
+export default function BookingDetails({ booking, onClose, onEdit }: Props) {
   const t = useTranslations("bookings");
   const [tab, setTab] = useState<(typeof tabs)[number]>("overview");
 
@@ -123,7 +124,13 @@ export default function BookingDetails({ booking, onClose }: Props) {
           />
         )}
 
-        <div className="flex justify-end">
+        <div className="flex flex-wrap justify-end gap-2">
+          {onEdit && (booking.status === "RESERVED" || booking.status === "ISSUED") && (
+            <>
+              {booking.status === "RESERVED" && <Button type="button" variant="outline" onClick={() => onEdit(booking.id, "edit")}>{t("editBooking")}</Button>}
+              <Button type="button" onClick={() => onEdit(booking.id, "extend")}>{t("extendBooking")}</Button>
+            </>
+          )}
           <Button type="button" variant="outline" onClick={onClose}>
             {t("layout.close")}
           </Button>
