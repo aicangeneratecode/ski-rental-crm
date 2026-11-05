@@ -62,7 +62,7 @@ export default function BookingCalculation({
           <dd className="shrink-0">{formatBookingMoney(booking.subtotal)}</dd>
         </div>
         <div className="flex justify-between gap-4">
-          <dt>{t("discount", { percent: booking.discountPercent })}</dt>
+          <dt>{booking.discountPercent > 0 ? t("discount", { percent: booking.discountPercent }) : t("fixedDiscount")}</dt>
           <dd className="shrink-0">−{formatBookingMoney(booking.discountAmount)}</dd>
         </div>
         <div className="flex justify-between gap-4 border-t border-gray-200 pt-3 text-lg font-semibold dark:border-gray-700">
