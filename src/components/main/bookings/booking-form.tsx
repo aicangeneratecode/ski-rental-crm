@@ -520,6 +520,10 @@ export default function BookingForm({
               </p>
             )}
 
+            {booking && pricing && pricing.total < booking.netPaid && (
+              <p role="alert" className="text-sm font-semibold text-red-600 dark:text-red-400">{t("errors.refundRequired")}</p>
+            )}
+
             {items.length > 0 && (
               <section aria-label={t("selectedEquipmentTitle")} className="space-y-2 border-t border-gray-200 pt-3 dark:border-gray-700">
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
@@ -538,12 +542,12 @@ export default function BookingForm({
                             {item.size} · {selected.complimentary ? t("free") : t("perDay", { amount: formatBookingMoney(booking?.items.find((old) => old.equipmentId === item.id)?.dailyRate ?? item.dailyRate) })}
                           </span>
                         </span>
-                        <button type="button" disabled={isSubmitting || issued}
+                        {!issued && <button type="button" disabled={isSubmitting}
                           onClick={() => updateItems(items.filter((entry) => entry.equipmentId !== selected.equipmentId))}
                           aria-label={t("removeSelectedEquipment", { name: item.name })}
                           className="shrink-0 rounded-lg px-2.5 py-2 text-xs font-semibold text-gray-500 transition-colors hover:bg-red-50 hover:text-red-700 focus-visible:outline-2 focus-visible:outline-brand-500 disabled:opacity-40 dark:text-gray-400 dark:hover:bg-red-950/40 dark:hover:text-red-300">
                           {t("removeEquipment")}
-                        </button>
+                        </button>}
                       </li>
                     );
                   })}
@@ -585,7 +589,7 @@ export default function BookingForm({
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting || !pricing || selectedUnavailable}
+              disabled={isSubmitting || !pricing || selectedUnavailable || Boolean(booking && pricing.total < booking.netPaid)}
             >
               {t(isSubmitting ? "saving" : "save")}
             </Button>
