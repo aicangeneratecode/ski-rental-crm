@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useSyncExternalStore } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
+import { Input } from "@/components/ui/input";
 import { useTranslations } from "next-intl";
 import { qrMatrix } from "@/lib/equipment/qr-code";
 
@@ -9,7 +10,15 @@ export default function EquipmentQrLabel({id,code,name,size}:{
 }) {
   const t=useTranslations("equipmentQr");
   const origin=useSyncExternalStore(()=>()=>{},()=>window.location.origin,()=>"");
-  const url=origin?origin+"/q/"+id:"";
+  const [baseInput,setBaseInput]=useState("");
+  const base=useMemo(()=>{
+    try {
+      const parsed=new URL(baseInput.trim()||origin);
+      if(!["http:","https:"].includes(parsed.protocol)||parsed.username||parsed.password)return "";
+      return parsed.origin;
+    }catch{return ""}
+  },[baseInput,origin]);
+  const url=base?base+"/q/"+id:"";
   const result=useMemo(()=>{
     if(!url)return null;
     try {
@@ -22,6 +31,14 @@ export default function EquipmentQrLabel({id,code,name,size}:{
   },[url]);
 
   return <div className="space-y-3">
+    <label className="block space-y-2 text-sm font-semibold text-gray-700 dark:text-gray-200">
+      {t("baseAddress")}
+      <Input type="url" value={baseInput} onChange={e=>setBaseInput(e.target.value)}
+        placeholder={origin || "https://crm.example.com"}/>
+    </label>
+    <p className="text-xs text-gray-500 dark:text-gray-400">{t("addressHint")}</p>
+    {base && /^(localhost|127\\.0\\.0\\.1)$/.test(new URL(base).hostname) &&
+      <p role="note" className="text-xs text-amber-700 dark:text-amber-400">{t("localhostWarning")}</p>}
     <div id="topride-print-label" className="mx-auto w-full max-w-[310px] rounded-2xl border border-gray-300 bg-white p-5 text-center text-gray-950">
       <p className="text-sm font-black tracking-[0.18em]">TOP RIDE</p>
       <p className="mt-1 text-xs text-gray-500">BELGRADE · RENTAL</p>
