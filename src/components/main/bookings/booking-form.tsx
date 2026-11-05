@@ -22,6 +22,7 @@ import { createBooking } from "@/lib/bookings/actions";
 import { updateBooking } from "@/lib/bookings/update-actions";
 import type { RentalRow } from "./booking-list-utils";
 import { categories, getTariff } from "@/lib/equipment/tariffs";
+import { firstAvailableUnit, groupEquipmentFamilies } from "@/lib/bookings/equipment-families";
 import { kitPartCategory, kitProgress, rentalKits, type RentalKitId } from "@/lib/bookings/kits";
 import BookingInlineCustomer from "./booking-inline-customer";
 import BookingCustomerPicker from "./booking-customer-picker";
@@ -137,8 +138,8 @@ export default function BookingForm({
     item.reservations.some(
       (reservation) =>
         reservation.bookingId !== booking?.id &&
-        reservation.startDate <= endDate &&
-        reservation.endDate >= startDate,
+        ((reservation.startDate <= endDate && reservation.endDate >= startDate) ||
+          (reservation.status === "ISSUED" && reservation.startDate <= endDate && reservation.endDate < startDate)),
     );
 
   const selectedUnavailable = items.some((selected) => {
@@ -183,10 +184,11 @@ export default function BookingForm({
       .toLowerCase()
       .includes(query),
   );
-  const equipmentGroups = categories.map((value) => ({
-    category: value,
-    items: visibleEquipment.filter((item) => getTariff(item.tariff)?.category === value),
-  })).filter((group) => group.items.length > 0);
+  const equipmentGroups = categories.map((value) => {
+    const members = visibleEquipment.filter((item) => getTariff(item.tariff)?.category === value);
+    return { category: value, families: groupEquipmentFamilies(members), count: members.length };
+  }).filter((group) => group.count > 0);
+  const selectedEquipmentIds = new Set(items.map(item => item.equipmentId));
 
   function updateItems(next: CreateBookingInput["items"]) {
     setValue("items", next, {
@@ -390,85 +392,58 @@ export default function BookingForm({
                   <div key={group.category} className="space-y-2">
                     <div className="sticky top-0 z-10 flex items-center justify-between rounded-lg bg-gray-100 px-3 py-2 text-xs font-bold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
                       <span>{t(`categories.${group.category}`)}</span>
-                      <span>{t("categoryCount", { count: group.items.length })}</span>
+                      <span>{t("categoryCount", { count: group.count })}</span>
                     </div>
-                    {group.items.map((item) => {
-                  const selected = items.find(
-                    (entry) => entry.equipmentId === item.id,
-                  );
-                  const occupied = isOccupied(item);
-
-                  return (
-                    <div
-                      key={item.id}
-                      className="rounded-lg border border-gray-200 p-3 dark:border-gray-700"
-                    >
-                      <label className="flex cursor-pointer items-start gap-3">
-                        <input
-                          type="checkbox"
-                          className="mt-1 size-4"
-                          checked={!!selected}
-                          disabled={
-                            !selected &&
-                            (!datesValid || occupied || items.length >= 100)
-                          }
-                          onChange={(event) =>
-                            updateItems(
-                              event.target.checked
-                                ? [
-                                    ...items,
-                                    {
-                                      equipmentId: item.id,
-                                      complimentary: false,
-                                    },
-                                  ]
-                                : items.filter(
-                                    (entry) =>
-                                      entry.equipmentId !== item.id,
-                                  ),
-                            )
-                          }
-                        />
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-sm font-medium">
-                            {item.name} · {item.size}
-                          </span>
-                          <span className="block text-sm text-gray-500">
-                            {t("perDay", {
-                              amount: formatBookingMoney(item.dailyRate),
-                            })}
-                          </span>
-                          {occupied && (
-                            <span className="block text-sm text-red-600">
-                              {t("occupied")}
-                            </span>
-                          )}
-                        </span>
-                      </label>
-
-                      {selected && (
-                        <label className="mt-2 flex items-center gap-2 text-sm">
-                          <input
-                            type="checkbox"
-                            checked={selected.complimentary}
-                            onChange={(event) =>
-                              updateItems(
-                                items.map((entry) =>
-                                  entry.equipmentId === item.id
-                                    ? {
-                                        ...entry,
-                                        complimentary: event.target.checked,
-                                      }
-                                    : entry,
-                                ),
-                              )
-                            }
-                          />
-                          {t("free")}
-                        </label>
-                      )}
-                    </div>
-                  );
+                    {group.families.map((family) => {
+                      const chosen = family.units.filter(unit => selectedEquipmentIds.has(unit.id));
+                      const available = family.units.filter(unit =>
+                        (unit.status === undefined || unit.status === "READY") &&
+                        !selectedEquipmentIds.has(unit.id) && !isOccupied(unit));
+                      const nextUnit = firstAvailableUnit(family, selectedEquipmentIds, isOccupied);
+                      return (
+                        <div key={family.key} className="space-y-2 rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <p className="break-words text-sm font-semibold text-gray-900 dark:text-gray-100">{family.name} · {family.size}</p>
+                              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                {t("perDay", { amount: formatBookingMoney(family.dailyRate) })}
+                                {" · "}{t("familyAvailable", { count: available.length })}
+                                {chosen.length > 0 ? " · " + t("familySelected", { count: chosen.length }) : ""}
+                              </p>
+                            </div>
+                            <button type="button"
+                              disabled={!datesValid || !nextUnit || items.length >= 100 || isSubmitting}
+                              onClick={() => {
+                                if (!nextUnit) return;
+                                updateItems([...items, { equipmentId: nextUnit.id, complimentary: false }]);
+                              }}
+                              className="rounded-lg border border-brand-300 bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-800 hover:bg-brand-100 focus-visible:outline-2 focus-visible:outline-brand-500 disabled:cursor-not-allowed disabled:opacity-40 dark:border-brand-800 dark:bg-brand-500/10 dark:text-brand-200">
+                              {t("familyAdd")}
+                            </button>
+                          </div>
+                          {chosen.map((item, index) => {
+                            const selected = items.find(entry => entry.equipmentId === item.id);
+                            if (!selected) return null;
+                            return (
+                              <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-gray-50 px-3 py-2 text-xs dark:bg-gray-800">
+                                <span className="font-semibold">{t("familyUnit", { index: index + 1 })}</span>
+                                <div className="flex flex-wrap items-center gap-3">
+                                  <label className="flex items-center gap-2">
+                                    <input type="checkbox" checked={selected.complimentary} disabled={isSubmitting}
+                                      onChange={(event) => updateItems(items.map(entry => entry.equipmentId === item.id
+                                        ? { ...entry, complimentary: event.target.checked }
+                                        : entry))} />
+                                    {t("free")}
+                                  </label>
+                                  <button type="button" disabled={isSubmitting}
+                                    onClick={() => updateItems(items.filter(entry => entry.equipmentId !== item.id))}
+                                    className="font-semibold text-red-600 hover:underline dark:text-red-400">{t("removeEquipment")}</button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
                     })}
                   </div>
                 ))}
