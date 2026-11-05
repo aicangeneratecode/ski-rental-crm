@@ -9,7 +9,7 @@ import { classifyDatabaseError, logDatabaseError } from "@/lib/db-errors";
 import { getStaffSession } from "@/lib/require-staff";
 
 const deleteRecordSchema = z.object({
-  kind: z.enum(["customer", "equipment"]),
+  kind: z.enum(["customer", "equipment", "booking"]),
   id: z.uuid(),
   version: z.number().int().positive(),
 });
@@ -22,6 +22,7 @@ export type DeleteRecordError =
   | "conflict"
   | "linkedCustomer"
   | "linkedEquipment"
+  | "notArchived"
   | "schemaOutdated"
   | "databaseUnavailable"
   | "database";
@@ -65,6 +66,32 @@ export async function deleteRecord(input: unknown): Promise<DeleteRecordResult> 
           return;
         }
 
+        if (kind === "booking") {
+          const booking = await tx.booking.findUnique({
+            where: { id },
+            select: { status: true, version: true, archivedAt: true },
+          });
+          if (!booking) reject("notFound");
+          if (booking.version !== version) reject("conflict");
+          if (!booking.archivedAt || !["RETURNED", "CANCELLED"].includes(booking.status)) {
+            reject("notArchived");
+          }
+          // Deleting an archive record is deliberately irreversible; financial
+          // payments and the rental's action log are removed together.
+          // Equipment inspections remain independently auditable.
+          await tx.equipmentMaintenance.updateMany({
+            where: { bookingId: id }, data: { bookingId: null },
+          });
+          await tx.payment.deleteMany({ where: { bookingId: id } });
+          await tx.bookingEvent.deleteMany({ where: { bookingId: id } });
+          await tx.bookingItem.deleteMany({ where: { bookingId: id } });
+          const removed = await tx.booking.deleteMany({
+            where: { id, version, status: { in: ["RETURNED", "CANCELLED"] }, archivedAt: { not: null } },
+          });
+          if (removed.count !== 1) reject("conflict");
+          return;
+        }
+
         if (kind === "equipment") {
           const item = await tx.equipment.findUnique({
             where: { id },
@@ -95,7 +122,7 @@ export async function deleteRecord(input: unknown): Promise<DeleteRecordResult> 
       if (error.code === "P2003") {
         return {
           ok: false,
-          error: kind === "customer" ? "linkedCustomer" : "linkedEquipment",
+          error: kind === "customer" ? "linkedCustomer" : kind === "equipment" ? "linkedEquipment" : "conflict",
         };
       }
       if (error.code === "P2034") return { ok: false, error: "conflict" };
