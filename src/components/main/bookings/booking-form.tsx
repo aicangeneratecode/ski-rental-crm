@@ -499,6 +499,37 @@ export default function BookingForm({
               </p>
             )}
 
+            {items.length > 0 && (
+              <section aria-label={t("selectedEquipmentTitle")} className="space-y-2 border-t border-gray-200 pt-3 dark:border-gray-700">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                  {t("selectedEquipmentTitle")}
+                </h4>
+                <ol className="space-y-2">
+                  {items.map((selected, index) => {
+                    const item = equipment.find((entry) => entry.id === selected.equipmentId);
+                    if (!item) return null;
+                    return (
+                      <li key={selected.equipmentId} className="flex min-w-0 items-center gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2.5 dark:border-gray-700 dark:bg-gray-900">
+                        <span className="shrink-0 text-xs font-semibold tabular-nums text-gray-400">{index + 1}.</span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block break-words text-sm font-semibold text-gray-900 dark:text-gray-100">{item.name}</span>
+                          <span className="block text-xs text-gray-500 dark:text-gray-400">
+                            {item.size} · {selected.complimentary ? t("free") : t("perDay", { amount: formatBookingMoney(item.dailyRate) })}
+                          </span>
+                        </span>
+                        <button type="button" disabled={isSubmitting}
+                          onClick={() => updateItems(items.filter((entry) => entry.equipmentId !== selected.equipmentId))}
+                          aria-label={t("removeSelectedEquipment", { name: item.name })}
+                          className="shrink-0 rounded-lg px-2.5 py-2 text-xs font-semibold text-gray-500 transition-colors hover:bg-red-50 hover:text-red-700 focus-visible:outline-2 focus-visible:outline-brand-500 disabled:opacity-40 dark:text-gray-400 dark:hover:bg-red-950/40 dark:hover:text-red-300">
+                          {t("removeEquipment")}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </section>
+            )}
+
             <p className="text-xs text-gray-500">
               {t("previewHint")}
             </p>
