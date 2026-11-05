@@ -50,6 +50,7 @@ async function loadData() {
             booking: {
               select: {
                 id: true,
+                status: true,
                 startDate: true,
                 endDate: true,
               },
@@ -116,6 +117,7 @@ async function loadData() {
       status: item.status,
       reservations: item.bookingItems.map(({ booking }) => ({
         bookingId: booking.id,
+        status: booking.status,
         startDate: dateOnly(booking.startDate),
         endDate: dateOnly(booking.endDate),
       })),
