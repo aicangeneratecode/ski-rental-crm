@@ -62,6 +62,7 @@ export default function BookingHistory({ bookingId, version }: Props) {
                 className="rounded-xl border border-gray-200 p-4 dark:border-gray-700"
               >
                 <p className="font-medium">{t(`events.${event.kind}`)}</p>
+                {event.details && <p className="mt-1 whitespace-pre-wrap break-words text-sm text-gray-700 dark:text-gray-300">{event.details}</p>}
                 <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                   {event.actor}
                 </p>
