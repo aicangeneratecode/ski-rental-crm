@@ -10,6 +10,7 @@ export type BookingCustomer = {
     name: string;
     size: string;
     dailyRate: number;
+    tariff: string;
     reservations: {
       startDate: string;
       endDate: string;
