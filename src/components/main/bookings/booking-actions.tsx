@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "@/i18n/navigation";
 import { changeBookingStatus } from "@/lib/bookings/status-actions";
 import type {
@@ -29,6 +30,7 @@ export default function BookingActions({
   const router = useRouter();
 
   const [selected, setSelected] = useState<BookingAction | null>(null);
+  const [earlyReason, setEarlyReason] = useState("");
   const [error, setError] = useState<StatusError | null>(null);
   const [saving, setSaving] = useState(false);
   const [completed, setCompleted] = useState(false);
@@ -54,6 +56,7 @@ export default function BookingActions({
         id: booking.id,
         version: booking.version,
         action: selected,
+        reason: selected === "issue" ? earlyReason : "",
       });
 
       if (!result.ok) {
@@ -87,6 +90,15 @@ export default function BookingActions({
           <p className="text-sm">
             {t(confirmationKeys[selected])}
           </p>
+          {selected === "issue" && (
+            <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300">
+              {t("earlyReasonLabel")}
+              <Textarea rows={2} maxLength={500} className="mt-2"
+                value={earlyReason} onChange={(event) => setEarlyReason(event.target.value)}
+                placeholder={t("earlyReasonPlaceholder")} />
+              <span className="mt-1 block font-normal text-gray-500">{t("earlyReasonHint")}</span>
+            </label>
+          )
           <div className="flex flex-wrap gap-2">
             <Button
               type="button"
