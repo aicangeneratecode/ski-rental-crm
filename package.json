@@ -14,7 +14,11 @@
     "test": "node --import tsx --test src/lib/equipment/schema.test.ts src/lib/bookings/pricing.test.ts src/lib/payments/schema.test.ts src/components/main/bookings/booking-list-utils.test.ts src/components/main/calendar/calendar-utils.test.ts src/lib/customers/list-utils.test.ts src/lib/deletion/policy.test.ts src/lib/db-errors.test.ts src/lib/bookings/customer-search.test.ts src/lib/bookings/kits.test.ts src/lib/bookings/equipment-families.test.ts src/lib/equipment/sort.test.ts src/lib/reports/report-data.test.ts src/lib/reports/csv.test.ts src/lib/equipment/normalize-legacy.test.ts",
     "test:db": "node --import tsx --test --test-concurrency=1 src/lib/equipment/repository.test.ts src/lib/bookings/operations.integration.test.ts src/lib/bookings/edits.integration.test.ts src/lib/customers/phase3.integration.test.ts src/lib/bookings/reschedule.integration.test.ts src/lib/reports/phase5.integration.test.ts src/lib/equipment/normalization.integration.test.ts",
     "import:legacy": "node --import tsx scripts/import-legacy-data.ts",
-    "db:doctor": "node --import tsx scripts/check-db.ts"
+    "db:doctor": "node --import tsx scripts/check-db.ts",
+    "db:backup:local": "node --import tsx scripts/transfer-postgres.ts backup",
+    "db:restore:vercel": "node --import tsx scripts/transfer-postgres.ts restore",
+    "db:verify:vercel": "node --import tsx scripts/transfer-postgres.ts verify",
+    "owner:setup": "node --import tsx scripts/provision-owner.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
