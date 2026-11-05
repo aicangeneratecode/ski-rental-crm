@@ -107,7 +107,7 @@ export default function EquipmentTable({
     columns,
   });
   return (
-    <div className="overflow-x-auto">
+    <div className="topride-data-table overflow-x-auto">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((group) => (
