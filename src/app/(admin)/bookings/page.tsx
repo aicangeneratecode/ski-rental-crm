@@ -30,7 +30,6 @@ async function loadData() {
       },
     }),
     db.equipment.findMany({
-      where: { status: "READY" },
       orderBy: { code: "asc" },
       select: {
         id: true,
@@ -39,6 +38,7 @@ async function loadData() {
         size: true,
         dailyRate: true,
         tariff: true,
+        status: true,
         bookingItems: {
           where: {
             booking: {
@@ -48,6 +48,7 @@ async function loadData() {
           select: {
             booking: {
               select: {
+                id: true,
                 startDate: true,
                 endDate: true,
               },
@@ -61,6 +62,7 @@ async function loadData() {
       select: {
         id: true,
         version: true,
+        customerId: true,
         createdAt: true,
         archivedAt: true,
         startDate: true,
@@ -89,6 +91,7 @@ async function loadData() {
           orderBy: { equipmentCode: "asc" },
           select: {
             id: true,
+            equipmentId: true,
             equipmentCode: true,
             equipmentName: true,
             complimentary: true,
@@ -109,7 +112,9 @@ async function loadData() {
       size: item.size,
       dailyRate: item.dailyRate,
       tariff: item.tariff,
+      status: item.status,
       reservations: item.bookingItems.map(({ booking }) => ({
+        bookingId: booking.id,
         startDate: dateOnly(booking.startDate),
         endDate: dateOnly(booking.endDate),
       })),
@@ -117,6 +122,7 @@ async function loadData() {
     rows: bookings.map((booking) => ({
       id: booking.id,
       version: booking.version,
+      customerId: booking.customerId,
       createdAt: booking.createdAt.toISOString(),
       archivedAt: booking.archivedAt?.toISOString() ?? null,
       customerName: booking.customer.name,
@@ -141,6 +147,7 @@ async function loadData() {
       ),
       items: booking.items.map((item) => ({
         id: item.id,
+        equipmentId: item.equipmentId,
         code: item.equipmentCode,
         name: item.equipmentName,
         complimentary: item.complimentary,
