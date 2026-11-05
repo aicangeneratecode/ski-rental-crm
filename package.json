@@ -12,7 +12,7 @@
     "db:setup": "prisma migrate deploy",
     "db:local": "prisma dev --name ski-rental",
     "test": "node --import tsx --test src/lib/equipment/schema.test.ts src/lib/bookings/pricing.test.ts src/lib/payments/schema.test.ts src/components/main/bookings/booking-list-utils.test.ts src/components/main/calendar/calendar-utils.test.ts src/lib/customers/list-utils.test.ts src/lib/deletion/policy.test.ts src/lib/db-errors.test.ts src/lib/bookings/customer-search.test.ts src/lib/bookings/kits.test.ts",
-    "test:db": "node --import tsx --test --test-concurrency=1 src/lib/equipment/repository.test.ts src/lib/bookings/operations.integration.test.ts src/lib/bookings/edits.integration.test.ts src/lib/customers/phase3.integration.test.ts",
+    "test:db": "node --import tsx --test --test-concurrency=1 src/lib/equipment/repository.test.ts src/lib/bookings/operations.integration.test.ts src/lib/bookings/edits.integration.test.ts src/lib/customers/phase3.integration.test.ts src/lib/bookings/reschedule.integration.test.ts",
     "import:legacy": "node --import tsx scripts/import-legacy-data.ts",
     "db:doctor": "node --import tsx scripts/check-db.ts"
   },
