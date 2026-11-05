@@ -1,4 +1,4 @@
-/** A booking can be removed only after its operational lifecycle has ended. */
-export function isDeletableBookingStatus(status: string): boolean {
+/** Only closed or cancelled rentals may be archived or restored. */
+export function canArchiveBookingStatus(status: string): boolean {
   return status === "RETURNED" || status === "CANCELLED";
 }
