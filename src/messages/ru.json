@@ -260,7 +260,7 @@
     "endDate": "Дата возврата",
     "dateHint": "Обе даты входят в аренду. Бесплатный день также занимает снаряжение.",
     "equipment": "Снаряжение",
-    "searchEquipment": "Номер, название или размер",
+    "searchEquipment": "Название модели или размер",
     "chooseDates": "Укажите корректные даты аренды длительностью до 366 дней.",
     "noEquipment": "По этому запросу ничего не найдено.",
     "occupied": "Занято на выбранные даты",
@@ -451,7 +451,17 @@
     "discountPercentLabel": "Скидка, %",
     "discountFixedLabel": "Скидка, RSD",
     "discountInvalid": "Укажите целое число: от 0 до 100% либо неотрицательную сумму в динарах.",
-    "discountMaxHint": "Скидка не может превышать стоимость выбранного оборудования."
+    "discountMaxHint": "Скидка не может превышать стоимость выбранного оборудования.",
+    "searchCustomer": "Введите имя, фамилию или телефон клиента",
+    "customerNoPhone": "Телефон не указан",
+    "customerNoResults": "Клиенты не найдены. Попробуйте другое имя или добавьте нового.",
+    "customerMoreResults": "Показаны первые {shown} из {total}. Уточните имя или телефон.",
+    "customerSearchHint": "Начните вводить имя или телефон и выберите клиента из результатов.",
+    "selectedCustomerLabel": "Выбран клиент",
+    "changeCustomer": "Изменить",
+    "selectedEquipmentTitle": "Снаряжение в брони",
+    "removeSelectedEquipment": "Убрать из брони: {name}",
+    "removeEquipment": "Убрать"
   },
   "sidebar": {
     "groups": {
