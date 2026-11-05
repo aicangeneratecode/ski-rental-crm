@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatRsd } from "@/lib/equipment/tariffs";
@@ -82,10 +82,14 @@ export default function ReportsDashboard({data,today}:{data:ReportData;today:str
         <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">{t("title")}</h1>
         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t("subtitle")}</p>
       </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Link href={`/reports/ledger?from=${data.period.from}&to=${data.period.to}`}
+          className="inline-flex min-h-10 items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-800 hover:border-brand-300 hover:text-brand-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100">{t("ledgerLink")}</Link>
       <a href={`/reports/export?from=${data.period.from}&to=${data.period.to}`}
         className="inline-flex min-h-10 items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-800 hover:border-brand-300 hover:text-brand-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100">
         {t("exportCsv")}
       </a>
+      </div>
     </header>
 
     <section className={panel} aria-label={t("filterTitle")}>
