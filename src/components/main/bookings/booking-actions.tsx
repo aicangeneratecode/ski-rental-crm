@@ -98,7 +98,7 @@ export default function BookingActions({
                 placeholder={t("earlyReasonPlaceholder")} />
               <span className="mt-1 block font-normal text-gray-500">{t("earlyReasonHint")}</span>
             </label>
-          )
+          )}
           <div className="flex flex-wrap gap-2">
             <Button
               type="button"
