@@ -21,6 +21,7 @@ import {
 import { createBooking } from "@/lib/bookings/actions";
 import { categories, getTariff } from "@/lib/equipment/tariffs";
 import BookingInlineCustomer from "./booking-inline-customer";
+import BookingCustomerPicker from "./booking-customer-picker";
 import { calculateRental } from "@/lib/bookings/pricing";
 import {
   createBookingSchema,
@@ -49,6 +50,7 @@ export default function BookingForm({
   const t = useTranslations("bookings");
   const router = useRouter();
   const [search, setSearch] = useState("");
+  const [customerQuery, setCustomerQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [discountMode, setDiscountMode] = useState<"percent" | "fixed">("percent");
   const [addingCustomer, setAddingCustomer] = useState(false);
@@ -75,6 +77,7 @@ export default function BookingForm({
     },
   });
 
+  const selectedCustomerId = useWatch({ control, name: "customerId" });
   const startDate = useWatch({ control, name: "startDate" });
   const endDate = useWatch({ control, name: "endDate" });
   const travelDay = useWatch({ control, name: "travelDay" });
@@ -212,19 +215,22 @@ export default function BookingForm({
                   {addingCustomer ? t("hideNewCustomer") : t("addCustomerInline")}
                 </Button>
               </div>
-              <select
-                {...register("customerId")}
-                id="booking-customer"
-                aria-invalid={!!errors.customerId}
-                className="h-11 w-full rounded-xl border border-gray-300 bg-white px-3 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-              >
-                <option value="">{t("chooseCustomer")}</option>
-                {customerOptions.map((customer) => (
-                  <option key={customer.id} value={customer.id}>
-                    {customer.name}{customer.phone ? ` · ${customer.phone}` : ""}
-                  </option>
-                ))}
-              </select>
+              <input type="hidden" {...register("customerId")} />
+              <BookingCustomerPicker
+                customers={customerOptions}
+                selectedId={selectedCustomerId}
+                query={customerQuery}
+                invalid={!!errors.customerId}
+                onQueryChange={(value) => {
+                  setCustomerQuery(value);
+                  setValue("customerId", "", { shouldDirty: true, shouldValidate: true });
+                }}
+                onSelect={(customer) => {
+                  setCustomerQuery(customer.name);
+                  setValue("customerId", customer.id, { shouldDirty: true, shouldValidate: true });
+                  setError(null);
+                }}
+              />
               {errors.customerId && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{t("chooseCustomer")}</p>}
             </Field>
 
@@ -234,6 +240,7 @@ export default function BookingForm({
                 onCreated={(customer) => {
                   setAddedCustomers((current) => [customer, ...current]);
                   setValue("customerId", customer.id, { shouldDirty: true, shouldValidate: true });
+                  setCustomerQuery(customer.name);
                   setAddingCustomer(false);
                   setError(null);
                 }}
@@ -355,7 +362,7 @@ export default function BookingForm({
                         />
                         <span className="min-w-0 flex-1">
                           <span className="block text-sm font-medium">
-                            {item.code} · {item.name} · {item.size}
+                            {item.name} · {item.size}
                           </span>
                           <span className="block text-sm text-gray-500">
                             {t("perDay", {
