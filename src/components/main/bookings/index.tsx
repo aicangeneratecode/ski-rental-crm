@@ -15,14 +15,14 @@ import {
   type RentalSort, type RentalView,
 } from "./booking-list-utils";
 
-type Props = { rows: RentalRow[]; customers: BookingCustomer[]; equipment: BookingEquipment[]; today: string; prefillCustomerId?:string; repeatBookingId?:string };
+type Props = { rows: RentalRow[]; customers: BookingCustomer[]; equipment: BookingEquipment[]; today: string; prefillCustomerId?:string; repeatBookingId?:string; prefillStartDate?:string; prefillEndDate?:string };
 const views: RentalView[] = ["all", "pickup", "return", "active", "attention", "balance", "reserved", "returned", "cancelled", "archived"];
 const highlights: RentalView[] = ["pickup", "return", "active", "attention"];
 const sortOptions: RentalSort[] = ["priority", "newest", "startAsc", "startDesc", "endAsc", "endDesc", "nameAsc", "amountDesc", "balanceDesc"];
 const defaultFilters: RentalFilters = { view: "all", query: "", from: "", to: "", balanceOnly: false, sort: "priority" };
 const selectClasses = "h-10 min-w-0 rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-800 outline-none transition-colors focus:border-brand-500 focus:ring-2 focus:ring-brand-500/15 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100";
 
-export default function Bookings({ rows, customers, equipment, today, prefillCustomerId, repeatBookingId }: Props) {
+export default function Bookings({ rows, customers, equipment, today, prefillCustomerId, repeatBookingId, prefillStartDate, prefillEndDate }: Props) {
   const t = useTranslations("bookings");
   const w = useTranslations("bookings.workspace");
   const calendarT = useTranslations("calendar");
@@ -32,7 +32,7 @@ export default function Bookings({ rows, customers, equipment, today, prefillCus
   const [pageSize, setPageSize] = useState(20);
   const [page, setPage] = useState(1);
   const [compact, setCompact] = useState(false);
-  const [open, setOpen] = useState(Boolean(prefillCustomerId&&customers.some(c=>c.id===prefillCustomerId)));
+  const [open, setOpen] = useState(Boolean((prefillStartDate && /^\d{4}-\d{2}-\d{2}$/.test(prefillStartDate)) || (prefillCustomerId&&customers.some(c=>c.id===prefillCustomerId))));
   const [saved, setSaved] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editing, setEditing] = useState<{ id: string; mode: "edit" | "extend" } | null>(null);
@@ -195,7 +195,7 @@ export default function Bookings({ rows, customers, equipment, today, prefillCus
 
       {selected && <BookingDetails key={selected.id} booking={selected} onEdit={openEdit} onClose={() => setSelectedId(null)} />}
       {editingBooking && <BookingForm key={`${editingBooking.id}-${editingBooking.version}-${editing?.mode}`} booking={editingBooking} editMode={editing?.mode} customers={customers} equipment={equipment} onClose={() => setEditing(null)} onSaved={() => setSaved(true)} />}
-      {open && <BookingForm customers={customers} equipment={equipment} initialCustomerId={prefillCustomerId} repeatFrom={repeatFrom} onClose={() => setOpen(false)} onSaved={() => setSaved(true)} />}
+      {open && <BookingForm customers={customers} equipment={equipment} initialCustomerId={prefillCustomerId} repeatFrom={repeatFrom} initialStartDate={prefillStartDate} initialEndDate={prefillEndDate} onClose={() => setOpen(false)} onSaved={() => setSaved(true)} />}
     </div>
   );
 }
