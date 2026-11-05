@@ -1,11 +1,12 @@
 "use client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PlusIcon, BoxIcon } from "@/icons";
 import { categories, statuses, getTariff } from "@/lib/equipment/tariffs";
 import type { EquipmentRow } from "@/lib/equipment/types";
+import { sortEquipmentRows, toggleEquipmentSort, type EquipmentSort, type EquipmentSortKey } from "@/lib/equipment/sort";
 import EquipmentForm from "./equipment-form";
 import EquipmentTable from "./equipment-table";
 import EquipmentDetails from "./equipment-details";
@@ -30,7 +31,10 @@ const selectedItem = rows.find((row) => row.id === selectedId);
   const [status, setStatus] = useState("active");
   const [editing, setEditing] = useState<EquipmentRow | "new" | null>(null);
   const [saved, setSaved] = useState(false);
-  const visible = rows.filter((row) => {
+  const [sort, setSort] = useState<EquipmentSort>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const visible = useMemo(() => rows.filter((row) => {
     const matchesStatus =
       status === "all" ||
       (status === "active" ? row.status !== "ARCHIVED" : row.status === status);
@@ -44,7 +48,18 @@ const selectedItem = rows.find((row) => row.id === selectedId);
       matchesCategory &&
       text.includes(query.trim().toLocaleLowerCase("ru"))
     );
-  });
+  }),[rows,status,category,query,t]);
+  const ordered = useMemo(() => sortEquipmentRows(visible, sort, {
+    tariff: (code) => t(`tariffs.${code}`),
+    status: (value) => t(`statuses.${value}`),
+  }),[visible,sort,t]);
+  const totalPages = Math.max(1, Math.ceil(ordered.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const pageRows = ordered.slice((currentPage-1)*pageSize,currentPage*pageSize);
+  function changeSort(key:EquipmentSortKey) {
+    setSort(current=>toggleEquipmentSort(current,key));
+    setPage(1);
+  }
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -93,12 +108,12 @@ const selectedItem = rows.find((row) => row.id === selectedId);
             aria-label={t("search")}
             placeholder={t("search")}
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => { setQuery(event.target.value); setPage(1); }}
           />
           <SelectField
             label={t("categoryFilter")}
             value={category}
-            onChange={setCategory}
+            onChange={(value)=>{setCategory(value);setPage(1)}}
             options={[
               { value: "all", label: t("allCategories") },
               ...categories.map((value) => ({
@@ -110,7 +125,7 @@ const selectedItem = rows.find((row) => row.id === selectedId);
           <SelectField
             label={t("statusFilter")}
             value={status}
-            onChange={setStatus}
+            onChange={(value)=>{setStatus(value);setPage(1)}}
             options={[
               { value: "active", label: t("activeOnly") },
               { value: "all", label: t("allStatuses") },
@@ -123,7 +138,9 @@ const selectedItem = rows.find((row) => row.id === selectedId);
         </div>
         {visible.length ? (
           <EquipmentTable
-          rows={visible}
+          rows={pageRows}
+          sort={sort}
+          onSort={changeSort}
           onView={(item) => setSelectedId(item.id)}
           onEdit={(item) => {
             setSaved(false);
@@ -147,6 +164,7 @@ const selectedItem = rows.find((row) => row.id === selectedId);
                   setQuery("");
                   setCategory("all");
                   setStatus("all");
+                  setPage(1);
                 }}
               >
                 {t("reset")}
@@ -154,9 +172,23 @@ const selectedItem = rows.find((row) => row.id === selectedId);
             )}
           </div>
         )}
-        <p className="border-t border-gray-100 px-5 py-3 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
-          {t("shown", { count: visible.length, total: rows.length })}
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 px-5 py-3 dark:border-gray-800">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {t("shown", { count: visible.length, total: rows.length })}
+            {" · "}{t("pageOf",{page:currentPage,total:totalPages})}
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+              {t("perPage")}
+              <select value={pageSize} onChange={event=>{setPageSize(Number(event.target.value));setPage(1)}}
+                className="h-9 rounded-lg border border-gray-200 bg-white px-2 text-sm dark:border-gray-700 dark:bg-gray-800">
+                {[20,50,100].map(value=><option value={value} key={value}>{value}</option>)}
+              </select>
+            </label>
+            <Button type="button" variant="outline" size="sm" disabled={currentPage<=1} onClick={()=>setPage(v=>Math.max(1,v-1))}>{t("previousPage")}</Button>
+            <Button type="button" variant="outline" size="sm" disabled={currentPage>=totalPages} onClick={()=>setPage(v=>Math.min(totalPages,v+1))}>{t("nextPage")}</Button>
+          </div>
+        </div>
       </section>
       {selectedItem && (
         <EquipmentDetails
