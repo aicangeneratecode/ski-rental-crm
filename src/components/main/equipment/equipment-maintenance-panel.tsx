@@ -26,7 +26,6 @@ export default function EquipmentMaintenancePanel({item, readOnly}:{
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
   const [success,setSuccess]=useState(false);
-  useEffect(()=>{setVersion(item.version)},[item.version]);
   useEffect(()=>{
     let active=true;
     readMaintenance(item.id).then(result=>{if(active)setHistory(result)}).catch(()=>{
@@ -40,10 +39,10 @@ export default function EquipmentMaintenancePanel({item, readOnly}:{
     setBusy(true);setError("");setSuccess(false);
     try {
       const result=await saveMaintenance({
-        equipmentId:item.id,version,kind,condition:kind==="DAMAGE"?"DAMAGED":condition,note,
+        equipmentId:item.id,version:Math.max(version,item.version),kind,condition:kind==="DAMAGE"?"DAMAGED":condition,note,
       });
       if(!result.ok){setError(result.error);return}
-      setVersion(v=>v+1);
+      setVersion(v=>Math.max(v,item.version)+1);
       setNote("");setSuccess(true);setRevision(v=>v+1);
       router.refresh();
     }catch{setError("database")}
