@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
+import EquipmentMaintenancePanel from "./equipment-maintenance-panel";
 
 import { formatBookingDate } from "@/lib/bookings/types";
 import { Button } from "@/components/ui/button";
@@ -218,25 +220,11 @@ export default function EquipmentDetails({
             </section>
             )}
         {tab === "maintenance" && (
-          <section className="space-y-4">
-            <div>
-              <h3 className="font-semibold">{t("maintenanceTitle")}</h3>
-              <p className="mt-2 text-sm leading-6 text-gray-500">
-                {t("maintenanceHint")}
-              </p>
-            </div>
-
-            <p className="rounded-xl border border-dashed border-gray-300 p-8 text-center text-sm text-gray-500 dark:border-gray-700">
-              {t("maintenancePlaceholder")}
-            </p>
-
-            <Button type="button" disabled>
-              {t("addMaintenance")}
-            </Button>
-          </section>
+          <EquipmentMaintenancePanel item={item} readOnly={readOnly} />
         )}
 
         <div className="flex flex-wrap justify-end gap-3 border-t border-gray-100 pt-4 dark:border-gray-800">
+          <Link href={`/equipment/label/${item.id}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-xl border border-brand-300 px-4 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-50 dark:border-brand-700 dark:text-brand-300 dark:hover:bg-brand-500/10">{inventory("printQr")}</Link>
           <Button type="button" variant="outline" onClick={onClose}>
             {t("close")}
           </Button>
