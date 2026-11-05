@@ -29,7 +29,8 @@ async function main() {
       SELECT tbl.name,
         to_regclass(format('%I.%I', current_schema(), tbl.name)) IS NOT NULL AS present
       FROM unnest(ARRAY['Customer', 'Equipment', 'Booking', 'BookingItem',
-                        'Payment', 'BookingEvent', 'EquipmentMaintenance', 'CustomerMerge']) AS tbl(name)
+                        'Payment', 'BookingEvent', 'EquipmentMaintenance', 'CustomerMerge',
+                        'TariffRate', 'TariffChange', 'WorkspaceSettings', 'WorkspaceSettingsChange']) AS tbl(name)
     `;
 
     let missing = false;
@@ -57,6 +58,10 @@ async function main() {
       await tx.customer.findFirst({ select: { id: true, mergedIntoId: true } });
       await tx.equipmentMaintenance.count();
       await tx.customerMerge.count();
+      await tx.tariffRate.count();
+      await tx.tariffChange.count();
+      await tx.workspaceSettings.count();
+      await tx.workspaceSettingsChange.count();
     });
 
     console.log("\nTables and transaction queries are reachable. No data was changed.");
