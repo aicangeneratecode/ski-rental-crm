@@ -18,6 +18,7 @@ export const dynamic = "force-dynamic";
 
 async function loadCustomers(): Promise<CustomerListRow[]> {
   const customers = await getDb().customer.findMany({
+    where: { mergedIntoId: null },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     select: {
       id: true,
@@ -27,6 +28,7 @@ async function loadCustomers(): Promise<CustomerListRow[]> {
       notes: true,
       version: true,
       createdAt: true,
+      mergedAliases: { select: { id: true, name: true, phone: true, notes: true } },
       bookings: {
         orderBy: [{ startDate: "desc" }, { id: "desc" }],
         select: {
@@ -65,6 +67,7 @@ async function loadCustomers(): Promise<CustomerListRow[]> {
       version: customer.version,
       createdAt: customer.createdAt.toISOString(),
       rentals,
+      aliases: customer.mergedAliases,
       ...summarizeCustomerRentals(rentals),
     };
   });
