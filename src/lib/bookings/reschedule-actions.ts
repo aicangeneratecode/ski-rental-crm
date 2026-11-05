@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { getStaffSession } from "@/lib/require-staff";
 import { classifyDatabaseError, logDatabaseError } from "@/lib/db-errors";
-import { BookingError, type BookingErrorCode } from "./repository";
+import { BookingError } from "./repository";
+import type { BookingErrorCode } from "./schema";
 import { rescheduleBookingRecord, rescheduleSchema } from "./reschedule-repository";
 
 export type RescheduleResult =
