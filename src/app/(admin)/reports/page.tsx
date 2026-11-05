@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Link } from "@/i18n/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { requireStaff } from "@/lib/require-staff";
 import { getBelgradeDate } from "@/lib/bookings/today";
@@ -21,7 +22,7 @@ export default async function Page({ searchParams }: {
   if (!period) return (
     <ComponentCard title={t("invalidPeriodTitle")}>
       <p className="text-sm text-gray-500">{t("invalidPeriodHint")}</p>
-      <a href="/reports" className="mt-4 inline-block text-brand-700 underline dark:text-brand-300">{t("resetPeriod")}</a>
+      <Link href="/reports" className="mt-4 inline-block text-brand-700 underline dark:text-brand-300">{t("resetPeriod")}</Link>
     </ComponentCard>
   );
   const data = await loadReportData(period).catch(error => {
