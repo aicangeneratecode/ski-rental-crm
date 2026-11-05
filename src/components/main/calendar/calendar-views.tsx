@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import type { CalendarInventory, CalendarRental } from "./calendar-types";
-import { activeOn, addDays, endOfMonth, formatShortDate, overlaps, startOfMonth, startOfWeek } from "./calendar-utils";
+import { activeOn, addDays, endOfMonth, formatFullDay, formatShortDate, overlaps, startOfMonth, startOfWeek } from "./calendar-utils";
 
 type EventProps = {
   rental: CalendarRental;
@@ -95,10 +95,38 @@ export function CalendarOccupancy({ rentals, inventory, anchor, today, onRental 
   const w = useTranslations("calendarWorkspace");
   const weekStart = startOfWeek(anchor);
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  const occupants = (itemId: string, day: string) => rentals.filter((rental) =>
+    rental.equipmentIds.includes(itemId) && rental.status !== "RETURNED" &&
+    (activeOn(rental, day) || (rental.status === "ISSUED" && rental.endDate < today && day >= rental.endDate)));
   return (
     <section className="space-y-3">
       <p className="text-xs text-gray-500 dark:text-gray-400">{w("occupancyHint")}</p>
-      <div role="region" tabIndex={0} aria-label={w("occupancy")} className="overflow-x-auto rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-[#1b1e21]">
+      <div className="space-y-2 md:hidden">
+        <p className="text-sm font-bold capitalize">{w("mobileOccupancyDay", { day: formatFullDay(anchor) })}</p>
+        {inventory.map((item) => {
+          const events = occupants(item.id, anchor);
+          const booking = events[0];
+          return (
+            <article key={item.id} className="flex min-w-0 flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-[#1b1e21]">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">{item.name} · {item.size}</p>
+                <p className="mt-1 text-xs text-gray-500">{item.code}</p>
+                {item.status !== "READY" && <p className="mt-1 text-xs font-semibold text-amber-600">{w(item.status === "MAINTENANCE" ? "maintenance" : "archived")}</p>}
+              </div>
+              {booking ? (
+                <button type="button" onClick={() => onRental(booking.id)}
+                  className="max-w-[45%] truncate rounded-lg border border-brand-300 bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-800 dark:border-brand-800 dark:bg-brand-500/15 dark:text-brand-200">
+                  {booking.customerName}{events.length > 1 ? " +" + (events.length - 1) : ""}
+                </button>
+              ) : (
+                <span className="text-xs text-gray-500">{w("mobileFree")}</span>
+              )}
+            </article>
+          );
+        })}
+        {inventory.length === 0 && <p className="p-5 text-sm text-gray-500">{w("noInventory")}</p>}
+      </div>
+      <div role="region" tabIndex={0} aria-label={w("occupancy")} className="hidden overflow-x-auto rounded-2xl border border-gray-200 bg-white md:block dark:border-gray-800 dark:bg-[#1b1e21]">
         <div className="min-w-[1050px]">
           <div className="grid grid-cols-[230px_repeat(7,minmax(110px,1fr))] border-b border-gray-200 bg-gray-50 text-xs font-bold dark:border-gray-800 dark:bg-[#202427]">
             <div className="border-e border-gray-200 px-4 py-3 dark:border-gray-800">{w("inventory")}</div>
@@ -113,8 +141,7 @@ export function CalendarOccupancy({ rentals, inventory, anchor, today, onRental 
                 {item.status !== "READY" && <p className="mt-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400">{w(item.status === "MAINTENANCE" ? "maintenance" : "archived")}</p>}
               </div>
               {days.map((day) => {
-                const events = rentals.filter((rental) => rental.equipmentIds.includes(item.id) && rental.status !== "RETURNED"
-                  && (activeOn(rental, day) || (rental.status === "ISSUED" && rental.endDate < today && day >= rental.endDate)));
+                const events = occupants(item.id, day);
                 const booking = events[0];
                 return (
                   <div key={day} className={`min-w-0 border-e border-gray-100 px-1.5 py-3 last:border-0 dark:border-gray-800 ${day === today ? "bg-brand-50/35 dark:bg-brand-500/5" : ""}`}>
