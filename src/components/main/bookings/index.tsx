@@ -35,6 +35,7 @@ export default function Bookings({ rows, customers, equipment, today }: Props) {
   const [open, setOpen] = useState(false);
   const [saved, setSaved] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<{ id: string; mode: "edit" | "extend" } | null>(null);
   const [refreshing, startTransition] = useTransition();
 
   const invalidDates = Boolean(filters.from && filters.to && filters.from > filters.to);
@@ -46,7 +47,14 @@ export default function Bookings({ rows, customers, equipment, today }: Props) {
   const currentPage = Math.min(page, maxPage);
   const shown = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const selected = rows.find((row) => row.id === selectedId);
-  const canCreate = equipment.length > 0;
+  const editingBooking = rows.find((row) => row.id === editing?.id);
+  const canCreate = equipment.some((item) => item.status === "READY" || item.status === undefined);
+
+  function openEdit(id: string, mode: "edit" | "extend") {
+    setSelectedId(null);
+    setSaved(false);
+    setEditing({ id, mode });
+  }
 
   function setFilter<K extends keyof RentalFilters>(key: K, value: RentalFilters[K]) {
     setFilters((previous) => ({ ...previous, [key]: value }));
@@ -167,7 +175,7 @@ export default function Bookings({ rows, customers, equipment, today }: Props) {
         </div>
       ) : (
         <div className={compact ? "space-y-2" : "space-y-3"}>
-          {shown.map((row) => <BookingRentalCard key={row.id} row={row} today={today} compact={compact} onOpen={setSelectedId} />)}
+          {shown.map((row) => <BookingRentalCard key={row.id} row={row} today={today} compact={compact} onOpen={setSelectedId} onEdit={openEdit} />)}
         </div>
       )}
 
@@ -184,7 +192,8 @@ export default function Bookings({ rows, customers, equipment, today }: Props) {
         </nav>
       )}
 
-      {selected && <BookingDetails key={selected.id} booking={selected} onClose={() => setSelectedId(null)} />}
+      {selected && <BookingDetails key={selected.id} booking={selected} onEdit={openEdit} onClose={() => setSelectedId(null)} />}
+      {editingBooking && <BookingForm key={`${editingBooking.id}-${editingBooking.version}-${editing?.mode}`} booking={editingBooking} editMode={editing?.mode} customers={customers} equipment={equipment} onClose={() => setEditing(null)} onSaved={() => setSaved(true)} />}
       {open && <BookingForm customers={customers} equipment={equipment} onClose={() => setOpen(false)} onSaved={() => setSaved(true)} />}
     </div>
   );
