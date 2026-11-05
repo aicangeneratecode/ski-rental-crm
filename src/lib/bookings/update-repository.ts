@@ -81,9 +81,9 @@ export async function updateBookingRecord(
         }
 
         const customer = await tx.customer.findUnique({
-          where: { id: values.customerId }, select: { id: true },
+          where: { id: values.customerId }, select: { id: true, mergedIntoId: true },
         });
-        if (!customer) throw new BookingError("customerMissing");
+        if (!customer || customer.mergedIntoId) throw new BookingError("customerMissing");
 
         const equipment = await tx.equipment.findMany({
           where: { id: { in: equipmentIds } },
