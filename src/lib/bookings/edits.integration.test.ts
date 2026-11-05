@@ -101,7 +101,7 @@ test("real PostgreSQL: modify reservation, swap equipment, extend issued rental,
     assert.equal(booking.items.find((item) => item.equipmentId === inventory[0])?.dailyRate, 2000);
     assert.equal(booking.items.find((item) => item.equipmentId === inventory[1])?.dailyRate, 500);
     assert.equal(booking.payments.length, 1);
-    assert.equal(booking.events.at(-1)?.kind, "EXTENDED");
+    assert.equal(booking.events.find((event) => event.bookingVersion === booking.version)?.kind, "EXTENDED");
 
     const reservedOther = await createBookingRecord({
       ...initial,
@@ -145,7 +145,7 @@ test("real PostgreSQL: modify reservation, swap equipment, extend issued rental,
     assert.equal(booking.total, 9000);
     assert.equal(booking.payments.length, 1);
     assert.equal(booking.events.at(-1)?.kind, "EXTENDED");
-    assert.match(booking.events.at(-1)?.details ?? "", /Даты:/);
+    assert.match(booking.events.find((event) => event.bookingVersion === booking.version)?.details ?? "", /Даты:/);
 
     await assert.rejects(
       updateBookingRecord({
