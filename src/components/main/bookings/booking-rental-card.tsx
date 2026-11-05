@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import DeleteRecordButton from "@/components/common/delete-record-button";
+import ArchiveBookingButton from "./archive-booking-button";
 import { getTodayKind } from "@/lib/bookings/today";
 import { formatBookingDate, formatBookingMoney } from "@/lib/bookings/types";
 import BookingActions from "./booking-actions";
@@ -32,6 +32,7 @@ export default function BookingRentalCard({ row, today, compact, onOpen }: Props
   const kind = getTodayKind(row, today);
   const due = rentalBalance(row);
   const isCancelled = row.status === "CANCELLED";
+  const isArchived = Boolean(row.archivedAt);
   const paidPercent = row.total > 0 ? Math.max(0, Math.min(100, (row.netPaid / row.total) * 100)) : 100;
   const tags = compact ? row.items.slice(0, 2) : row.items.slice(0, 4);
   const extra = row.items.length - tags.length;
@@ -43,6 +44,7 @@ export default function BookingRentalCard({ row, today, compact, onOpen }: Props
           <span className={`inline-flex max-w-full rounded-md px-2.5 py-1 text-[11px] font-semibold ${statusTone[row.status]}`}>
             {t(`statuses.${row.status}`)}
           </span>
+          {isArchived && <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">{t("workspace.views.archived")}</span>}
           {(kind === "overdue" || kind === "missed") && (
             <span className="text-xs font-semibold text-red-600 dark:text-red-400">
               {kind === "overdue"
@@ -109,7 +111,7 @@ export default function BookingRentalCard({ row, today, compact, onOpen }: Props
         <BookingActions key={`${row.id}-${row.version}`} booking={row} compact />
         <div className="flex items-center gap-2">
           {(row.status === "RETURNED" || row.status === "CANCELLED") && (
-            <DeleteRecordButton kind="booking" id={row.id} version={row.version} label={t("reference", { id: row.id.slice(0, 8).toUpperCase() })} />
+            <ArchiveBookingButton id={row.id} version={row.version} archived={isArchived} label={t("reference", { id: row.id.slice(0, 8).toUpperCase() })} />
           )}
           <Button type="button" size="sm" variant="outline" onClick={() => onOpen(row.id)}>{t("workspace.openDetails")}</Button>
         </div>
