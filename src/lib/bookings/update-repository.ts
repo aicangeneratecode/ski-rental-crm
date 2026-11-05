@@ -226,7 +226,7 @@ export async function updateBookingRecord(
           data: {
             bookingId: id,
             actorId,
-            kind: values.endDate > oldEnd ? "EXTENDED" : "UPDATED",
+            kind: values.startDate === oldStart && values.endDate > oldEnd ? "EXTENDED" : "UPDATED",
             details,
             bookingVersion: version + 1,
           },
