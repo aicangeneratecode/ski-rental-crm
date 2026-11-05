@@ -21,6 +21,8 @@ export type PaymentError =
   | "refundTooLarge"
   | "requestMismatch"
   | "conflict"
+  | "schemaOutdated"
+  | "databaseUnavailable"
   | "database";
 
 export type PaymentResult =
