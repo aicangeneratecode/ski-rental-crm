@@ -17,6 +17,7 @@ export async function changeBookingStatusRecord(
   action: BookingAction,
   staffId: string,
   today = getBelgradeDate(),
+  reason = "",
 ): Promise<void> {
   const expectedStatus = action === "return" ? "ISSUED" : "RESERVED";
   const nextStatus = action === "issue" ? "ISSUED" : action === "return" ? "RETURNED" : "CANCELLED";
@@ -48,7 +49,14 @@ export async function changeBookingStatusRecord(
       if (action === "issue") {
         const start = booking.startDate.toISOString().slice(0, 10);
         const end = booking.endDate.toISOString().slice(0, 10);
-        if (today < start || today > end) throw new StatusChangeError("outsideDates");
+        if (today > end) throw new StatusChangeError("outsideDates");
+        if (today < start) {
+          // One-day early pickup only, by explicit reason and with stock availability.
+          const previousDay = new Date(Date.parse(start + "T00:00:00Z") - 86_400_000)
+            .toISOString().slice(0, 10);
+          if (today < previousDay) throw new StatusChangeError("outsideDates");
+          if (reason.trim().length < 8) throw new StatusChangeError("earlyReasonRequired");
+        }
         if (booking.items.length === 0 ||
             booking.items.some((item) => item.equipment.status !== "READY")) {
           throw new StatusChangeError("equipmentUnavailable");
@@ -62,6 +70,21 @@ export async function changeBookingStatusRecord(
           select: { id: true },
         });
         if (stillIssued) throw new StatusChangeError("stillIssued");
+        if (today < start) {
+          const otherReservationToday = await tx.bookingItem.findFirst({
+            where: {
+              equipmentId: { in: booking.items.map((item) => item.equipmentId) },
+              booking: {
+                id: { not: id },
+                status: "RESERVED",
+                startDate: { lte: new Date(today + "T00:00:00Z") },
+                endDate: { gte: new Date(today + "T00:00:00Z") },
+              },
+            },
+            select: { id: true },
+          });
+          if (otherReservationToday) throw new StatusChangeError("equipmentReservedToday");
+        }
       }
 
       const result = await tx.booking.updateMany({
@@ -76,6 +99,9 @@ export async function changeBookingStatusRecord(
           actorId: staffId,
           kind: action === "issue" ? "ISSUED" : action === "return" ? "RETURNED" : "CANCELLED",
           bookingVersion: version + 1,
+          details: action === "issue" && today < booking.startDate.toISOString().slice(0, 10)
+            ? "Досрочная выдача " + today + ". Причина: " + reason.trim()
+            : "",
         },
       });
     }, {
