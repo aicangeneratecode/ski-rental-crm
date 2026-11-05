@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/dialog";
 
 import { createBooking } from "@/lib/bookings/actions";
+import { updateBooking } from "@/lib/bookings/update-actions";
+import type { RentalRow } from "./booking-list-utils";
 import { categories, getTariff } from "@/lib/equipment/tariffs";
 import BookingInlineCustomer from "./booking-inline-customer";
 import BookingCustomerPicker from "./booking-customer-picker";
@@ -39,6 +41,8 @@ type Props = {
   equipment: BookingEquipment[];
   onClose: () => void;
   onSaved: () => void;
+  booking?: RentalRow;
+  editMode?: "edit" | "extend";
 };
 
 export default function BookingForm({
@@ -46,13 +50,17 @@ export default function BookingForm({
   equipment,
   onClose,
   onSaved,
+  booking,
+  editMode = "edit",
 }: Props) {
   const t = useTranslations("bookings");
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const [customerQuery, setCustomerQuery] = useState("");
+  const [customerQuery, setCustomerQuery] = useState(booking?.customerName ?? "");
   const [category, setCategory] = useState("all");
-  const [discountMode, setDiscountMode] = useState<"percent" | "fixed">("percent");
+  const [discountMode, setDiscountMode] = useState<"percent" | "fixed">(booking && booking.discountPercent === 0 && booking.discountAmount > 0 ? "fixed" : "percent");
+  const issued = booking?.status === "ISSUED";
+  const extending = Boolean(booking && editMode === "extend");
   const [addingCustomer, setAddingCustomer] = useState(false);
   const [addedCustomers, setAddedCustomers] = useState<BookingCustomer[]>([]);
   const [error, setError] = useState<BookingErrorCode | null>(null);
@@ -66,14 +74,17 @@ export default function BookingForm({
   } = useForm<CreateBookingInput>({
     resolver: zodResolver(createBookingSchema),
     defaultValues: {
-      customerId: "",
-      startDate: "",
-      endDate: "",
-      travelDay: false,
-      discountPercent: 0,
-      discountFixed: 0,
-      notes: "",
-      items: [],
+      customerId: booking?.customerId ?? "",
+      startDate: booking?.startDate ?? "",
+      endDate: booking?.endDate ?? "",
+      travelDay: booking?.travelDay ?? false,
+      discountPercent: booking?.discountPercent ?? 0,
+      discountFixed: booking && booking.discountPercent === 0 ? booking.discountAmount : 0,
+      notes: booking?.notes ?? "",
+      items: booking?.items.filter((item) => Boolean(item.equipmentId)).map((item) => ({
+        equipmentId: item.equipmentId!,
+        complimentary: item.complimentary,
+      })) ?? [],
     },
   });
 
@@ -115,6 +126,7 @@ export default function BookingForm({
     datesValid &&
     item.reservations.some(
       (reservation) =>
+        reservation.bookingId !== booking?.id &&
         reservation.startDate <= endDate &&
         reservation.endDate >= startDate,
     );
@@ -143,7 +155,8 @@ export default function BookingForm({
 
           if (!record) throw new Error("MISSING_EQUIPMENT");
 
-          return { ...item, dailyRate: record.dailyRate };
+          const previous = booking?.items.find((entry) => entry.equipmentId === item.equipmentId);
+          return { ...item, dailyRate: previous?.dailyRate ?? record.dailyRate };
         }),
       });
     }
@@ -153,6 +166,8 @@ export default function BookingForm({
 
   const query = search.trim().toLowerCase();
   const visibleEquipment = equipment.filter((item) =>
+    (item.status === undefined || item.status === "READY" ||
+      booking?.items.some((selected) => selected.equipmentId === item.id)) &&
     (category === "all" || getTariff(item.tariff)?.category === category) &&
     `${item.code} ${item.name} ${item.size} ${item.tariff}`
       .toLowerCase()
@@ -175,7 +190,9 @@ export default function BookingForm({
     setError(null);
 
     try {
-      const result = await createBooking(values);
+      const result = booking
+        ? await updateBooking({ id: booking.id, version: booking.version, values })
+        : await createBooking(values);
 
       if (!result.ok) {
         setError(result.error);
@@ -202,8 +219,8 @@ export default function BookingForm({
         className="max-h-[90dvh] overflow-y-auto sm:max-w-3xl"
       >
         <DialogHeader>
-          <DialogTitle>{t("add")}</DialogTitle>
-          <DialogDescription>{t("formHint")}</DialogDescription>
+          <DialogTitle>{t(booking ? extending ? "extendBooking" : "editBooking" : "add")}</DialogTitle>
+          <DialogDescription>{t(booking ? issued ? "issuedEditHint" : "reservedEditHint" : "formHint")}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={submit} noValidate className="space-y-5">
@@ -211,12 +228,14 @@ export default function BookingForm({
             <Field controlId="booking-customer">
               <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                 <FieldLabel>{t("customer")}</FieldLabel>
-                <Button type="button" size="sm" variant="outline" onClick={() => setAddingCustomer((previous) => !previous)}>
+                {!issued && <Button type="button" size="sm" variant="outline" onClick={() => setAddingCustomer((previous) => !previous)}>
                   {addingCustomer ? t("hideNewCustomer") : t("addCustomerInline")}
-                </Button>
+                </Button>}
               </div>
               <input type="hidden" {...register("customerId")} />
-              <BookingCustomerPicker
+              {issued ? (
+                <p className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold dark:border-gray-700 dark:bg-gray-800">{booking?.customerName}</p>
+              ) : <BookingCustomerPicker
                 customers={customerOptions}
                 selectedId={selectedCustomerId}
                 query={customerQuery}
@@ -230,11 +249,11 @@ export default function BookingForm({
                   setValue("customerId", customer.id, { shouldDirty: true, shouldValidate: true });
                   setError(null);
                 }}
-              />
+              />}
               {errors.customerId && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{t("chooseCustomer")}</p>}
             </Field>
 
-            {addingCustomer && (
+            {!issued && addingCustomer && (
               <BookingInlineCustomer
                 onCancel={() => setAddingCustomer(false)}
                 onCreated={(customer) => {
@@ -254,7 +273,7 @@ export default function BookingForm({
                   id="booking-start"
                   label={t("startDate")}
                   value={startDate}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || issued}
                   invalid={!!errors.startDate}
                   onChange={(value) =>
                     setValue("startDate", value, {
@@ -272,7 +291,7 @@ export default function BookingForm({
                   id="booking-end"
                   label={t("endDate")}
                   value={endDate}
-                  min={startDate || undefined}
+                  min={extending || issued ? booking?.endDate : startDate || undefined}
                   disabled={isSubmitting}
                   invalid={!!errors.endDate}
                   onChange={(value) =>
@@ -292,13 +311,14 @@ export default function BookingForm({
 
             <section className="space-y-3">
               <h3 className="font-medium">{t("equipment")}</h3>
-              <Input
+              {issued && <p className="text-xs text-amber-700 dark:text-amber-400">{t("issuedItemsLocked")}</p>}
+              {!issued && <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder={t("searchEquipment")}
                 aria-label={t("searchEquipment")}
-              />
-              <div role="group" aria-label={t("equipmentCategory")} className="flex gap-2 overflow-x-auto pb-1">
+              />}
+              {!issued && <div role="group" aria-label={t("equipmentCategory")} className="flex gap-2 overflow-x-auto pb-1">
                 {["all", ...categories].map((value) => (
                   <button key={value} type="button" aria-pressed={category === value}
                     onClick={() => setCategory(value)}
@@ -308,15 +328,15 @@ export default function BookingForm({
                     {value === "all" ? t("allEquipmentCategories") : t(`categories.${value}`)}
                   </button>
                 ))}
-              </div>
+              </div>}
 
-              {!datesValid && (
+              {!issued && !datesValid && (
                 <p className="text-sm text-gray-500">
                   {t("chooseDates")}
                 </p>
               )}
 
-              <div className="max-h-64 space-y-2 overflow-y-auto">
+              {!issued && <div className="max-h-64 space-y-2 overflow-y-auto">
                 {equipmentGroups.map((group) => (
                   <div key={group.category} className="space-y-2">
                     <div className="sticky top-0 z-10 flex items-center justify-between rounded-lg bg-gray-100 px-3 py-2 text-xs font-bold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
@@ -409,12 +429,12 @@ export default function BookingForm({
                     {t("noEquipment")}
                   </p>
                 )}
-              </div>
+              </div>}
             </section>
 
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-medium">
-                <input type="checkbox" {...register("travelDay")} />
+                <input type="checkbox" {...register("travelDay")} disabled={issued} />
                 {t("travelDay")}
               </label>
               <p className="text-sm text-gray-500">{t("travelHint")}</p>
@@ -468,6 +488,7 @@ export default function BookingForm({
             className="space-y-2 rounded-xl bg-gray-50 p-4 dark:bg-gray-800"
           >
             <h3 className="font-semibold">{t("summary")}</h3>
+            {booking && <p className="text-xs text-gray-500 dark:text-gray-400">{t("previousTotal")}: {formatBookingMoney(booking.total)} · {t("alreadyPaid")}: {formatBookingMoney(booking.netPaid)}</p>}
             <p className="text-sm">
               {t("selected", { count: items.length })}
             </p>
@@ -514,10 +535,10 @@ export default function BookingForm({
                         <span className="min-w-0 flex-1">
                           <span className="block break-words text-sm font-semibold text-gray-900 dark:text-gray-100">{item.name}</span>
                           <span className="block text-xs text-gray-500 dark:text-gray-400">
-                            {item.size} · {selected.complimentary ? t("free") : t("perDay", { amount: formatBookingMoney(item.dailyRate) })}
+                            {item.size} · {selected.complimentary ? t("free") : t("perDay", { amount: formatBookingMoney(booking?.items.find((old) => old.equipmentId === item.id)?.dailyRate ?? item.dailyRate) })}
                           </span>
                         </span>
-                        <button type="button" disabled={isSubmitting}
+                        <button type="button" disabled={isSubmitting || issued}
                           onClick={() => updateItems(items.filter((entry) => entry.equipmentId !== selected.equipmentId))}
                           aria-label={t("removeSelectedEquipment", { name: item.name })}
                           className="shrink-0 rounded-lg px-2.5 py-2 text-xs font-semibold text-gray-500 transition-colors hover:bg-red-50 hover:text-red-700 focus-visible:outline-2 focus-visible:outline-brand-500 disabled:opacity-40 dark:text-gray-400 dark:hover:bg-red-950/40 dark:hover:text-red-300">
