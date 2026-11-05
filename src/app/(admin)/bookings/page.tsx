@@ -38,6 +38,7 @@ async function loadData() {
         name: true,
         size: true,
         dailyRate: true,
+        tariff: true,
         bookingItems: {
           where: {
             booking: {
@@ -106,6 +107,7 @@ async function loadData() {
       name: item.name,
       size: item.size,
       dailyRate: item.dailyRate,
+      tariff: item.tariff,
       reservations: item.bookingItems.map(({ booking }) => ({
         startDate: dateOnly(booking.startDate),
         endDate: dateOnly(booking.endDate),
