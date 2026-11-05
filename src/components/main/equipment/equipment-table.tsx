@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { flexRender, useTable, type ColumnDef } from "@tanstack/react-table";
 import {
@@ -13,26 +13,25 @@ import { Button } from "@/components/ui/button";
 import DeleteRecordButton from "@/components/common/delete-record-button";
 import { formatRsd } from "@/lib/equipment/tariffs";
 import type { EquipmentRow } from "@/lib/equipment/types";
-import { sortEquipmentRows, toggleEquipmentSort, type EquipmentSort, type EquipmentSortKey } from "@/lib/equipment/sort";
+import type { EquipmentSort, EquipmentSortKey } from "@/lib/equipment/sort";
 interface EquipmentTableProps {
   rows: EquipmentRow[];
   onEdit: (item: EquipmentRow) => void;
   onView: (item: EquipmentRow) => void;
   readOnly: boolean;
+  sort: EquipmentSort;
+  onSort: (key: EquipmentSortKey) => void;
 }
 export default function EquipmentTable({
   rows,
   onEdit,
   onView,
   readOnly,
+  sort,
+  onSort,
 }: EquipmentTableProps) {
   const t = useTranslations("inventory");
   const profileT = useTranslations("equipmentProfile");
-  const [sort, setSort] = useState<EquipmentSort>(null);
-  const sortedRows = useMemo(() => sortEquipmentRows(rows, sort, {
-    tariff: (value) => t(`tariffs.${value}`),
-    status: (value) => t(`statuses.${value}`),
-  }), [rows, sort, t]);
   const sortableColumns: readonly string[] = ["name", "tariff", "size", "dailyRate", "status"];
   const columns = useMemo<ColumnDef<Record<string, never>, EquipmentRow>[]>(
     () => [
@@ -104,7 +103,7 @@ export default function EquipmentTable({
   );
   const table = useTable({
     features: {},
-    data: sortedRows,
+    data: rows,
     columns,
   });
   return (
@@ -125,7 +124,7 @@ export default function EquipmentTable({
                   {sortableColumns.includes(header.column.id) ? (
                     <button
                       type="button"
-                      onClick={() => setSort((current) => toggleEquipmentSort(current, header.column.id as EquipmentSortKey))}
+                      onClick={() => onSort(header.column.id as EquipmentSortKey)}
                       aria-label={t("sortByColumn", {
                         column: typeof header.column.columnDef.header === "string"
                           ? header.column.columnDef.header
