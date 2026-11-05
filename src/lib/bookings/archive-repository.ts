@@ -1,6 +1,6 @@
 import { Prisma } from "@/generated/prisma/client";
 import { getDb } from "@/lib/db";
-import { isDeletableBookingStatus } from "@/lib/deletion/policy";
+import { canArchiveBookingStatus } from "@/lib/deletion/policy";
 
 export type ArchiveOperation = "archive" | "restore";
 export type ArchiveErrorCode = "notFound" | "conflict" | "activeBooking";
@@ -30,7 +30,7 @@ export async function setBookingArchivedRecord(
       if (booking.version !== version || (booking.archivedAt !== null) !== !archived) {
         throw new ArchiveBookingError("conflict");
       }
-      if (!isDeletableBookingStatus(booking.status)) {
+      if (!canArchiveBookingStatus(booking.status)) {
         throw new ArchiveBookingError("activeBooking");
       }
       const updated = await tx.booking.updateMany({
