@@ -6,6 +6,7 @@ import { getDb } from "@/lib/db";
 import { getStaffSession } from "@/lib/require-staff";
 import {
   saveCustomerSchema,
+  customerSchema,
   type CustomerSaveResult,
 } from "./schema";
 
@@ -53,4 +54,27 @@ export async function saveCustomer(
   revalidatePath("/customers");
 
   return { ok: true };
+}
+/** Create a customer from an open booking without leaving the booking form. */
+export async function createCustomerFromBooking(input: unknown): Promise<
+  | { ok: true; customer: { id: string; name: string; phone: string } }
+  | { ok: false; error: "invalid" | "authRequired" | "database" }
+> {
+  const session = await getStaffSession();
+  if (!session) return { ok: false, error: "authRequired" };
+
+  const parsed = customerSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "invalid" };
+
+  try {
+    const customer = await getDb().customer.create({
+      data: parsed.data,
+      select: { id: true, name: true, phone: true },
+    });
+    revalidatePath("/customers");
+    revalidatePath("/bookings");
+    return { ok: true, customer };
+  } catch {
+    return { ok: false, error: "database" };
+  }
 }
