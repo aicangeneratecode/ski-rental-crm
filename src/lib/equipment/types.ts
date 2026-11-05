@@ -18,5 +18,5 @@ export type SaveResult =
   | { ok: true }
   | {
       ok: false;
-      error: "invalid" | "duplicate" | "conflict" | "database" | "authRequired";
+      error: "invalid" | "duplicate" | "conflict" | "database" | "authRequired" | "schemaOutdated" | "databaseUnavailable";
     };
