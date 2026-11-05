@@ -29,7 +29,7 @@ async function main() {
       SELECT tbl.name,
         to_regclass(format('%I.%I', current_schema(), tbl.name)) IS NOT NULL AS present
       FROM unnest(ARRAY['Customer', 'Equipment', 'Booking', 'BookingItem',
-                        'Payment', 'BookingEvent']) AS tbl(name)
+                        'Payment', 'BookingEvent', 'EquipmentMaintenance', 'CustomerMerge']) AS tbl(name)
     `;
 
     let missing = false;
@@ -52,8 +52,11 @@ async function main() {
     // This transaction only reads; it deliberately does not write or lock data.
     await db.$transaction(async (tx) => {
       await tx.booking.findFirst({ select: { id: true } });
-      await tx.bookingEvent.count();
+      await tx.bookingEvent.findFirst({ select: { id: true, details: true } });
       await tx.payment.count();
+      await tx.customer.findFirst({ select: { id: true, mergedIntoId: true } });
+      await tx.equipmentMaintenance.count();
+      await tx.customerMerge.count();
     });
 
     console.log("\nTables and transaction queries are reachable. No data was changed.");
