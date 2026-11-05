@@ -165,6 +165,7 @@ test("real PostgreSQL: modify reservation, swap equipment, extend issued rental,
       await db.bookingItem.deleteMany({ where });
       await db.booking.deleteMany({ where: { id: { in: bookingIds } } });
     }
+    await db.equipmentMaintenance.deleteMany({ where: { equipmentId: { in: inventory } } });
     await db.equipment.deleteMany({ where: { id: { in: inventory } } });
     await db.customer.deleteMany({ where: { id: { in: clients } } });
     await db.user.deleteMany({ where: { id: actorId } });
