@@ -38,8 +38,8 @@ function cashBuckets(days: CashDay[]) {
   }
   return out;
 }
-const metric="rounded-2xl border border-gray-200 bg-white p-4 shadow-theme-xs dark:border-gray-800 dark:bg-[#1b1e21]";
-const panel="rounded-2xl border border-gray-200 bg-white p-5 shadow-theme-xs dark:border-gray-800 dark:bg-[#1b1e21]";
+const metric="topride-kpi rounded-2xl border bg-white p-4 dark:bg-[#1b1e21]";
+const panel="topride-surface rounded-2xl border p-4 sm:p-5";
 
 export default function ReportsDashboard({data,today}:{data:ReportData;today:string}) {
   const t=useTranslations("reports");
@@ -134,7 +134,7 @@ export default function ReportsDashboard({data,today}:{data:ReportData;today:str
           </div>
           <span className="text-xs font-semibold text-gray-500">{data.period.from} — {data.period.to}</span>
         </div>
-        <div className="mt-5 flex h-44 min-w-0 items-end gap-1.5 overflow-x-auto border-b border-gray-200 pb-1 dark:border-gray-800"
+        <div className="topride-chart-grid mt-5 flex h-44 min-w-0 items-end gap-1.5 overflow-x-auto border-b border-gray-200 pb-1 dark:border-gray-800"
           role="img" aria-label={t("chartAlt")}>
           {chart.map(row=>{
             const positive=row.net>=0;
