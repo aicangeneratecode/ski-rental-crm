@@ -17,8 +17,8 @@ export async function changeBookingStatus(input: unknown): Promise<StatusResult>
   if (!parsed.success) return { ok: false, error: "invalid" };
 
   try {
-    const { id, version, action } = parsed.data;
-    await changeBookingStatusRecord(id, version, action, session.user.id);
+    const { id, version, action, reason } = parsed.data;
+    await changeBookingStatusRecord(id, version, action, session.user.id, undefined, reason);
   } catch (error) {
     if (error instanceof StatusChangeError) return { ok: false, error: error.code };
     logDatabaseError("changeBookingStatus", error);
