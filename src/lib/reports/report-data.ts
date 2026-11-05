@@ -74,20 +74,20 @@ export async function loadReportData(period: ReportPeriod): Promise<ReportData> 
   const { from, to, days: dayCount } = period;
   const [money, paid, categoryDays, items, inventory, bookingCount] = await Promise.all([
     db.$queryRaw<DailyMoneyQuery[]>`
-      SELECT ("createdAt" AT TIME ZONE 'Europe/Belgrade')::date::text AS "day",
+      SELECT (("createdAt" AT TIME ZONE 'UTC') AT TIME ZONE 'Europe/Belgrade')::date::text AS "day",
         kind::text AS "kind", method::text AS "method",
         SUM(amount)::bigint AS "amount", COUNT(*)::bigint AS "count"
       FROM "Payment"
-      WHERE "createdAt" >= (${from}::date::timestamp AT TIME ZONE 'Europe/Belgrade')
-        AND "createdAt" < ((${to}::date + INTERVAL '1 day')::timestamp AT TIME ZONE 'Europe/Belgrade')
+      WHERE "createdAt" >= ((${from}::date::timestamp AT TIME ZONE 'Europe/Belgrade') AT TIME ZONE 'UTC')
+        AND "createdAt" < (((${to}::date + INTERVAL '1 day')::timestamp AT TIME ZONE 'Europe/Belgrade') AT TIME ZONE 'UTC')
       GROUP BY 1, 2, 3
       ORDER BY 1, 2, 3
     `,
     db.$queryRaw<DistinctQuery[]>`
       SELECT COUNT(DISTINCT "bookingId")::bigint AS "paidBookings"
       FROM "Payment"
-      WHERE "createdAt" >= (${from}::date::timestamp AT TIME ZONE 'Europe/Belgrade')
-        AND "createdAt" < ((${to}::date + INTERVAL '1 day')::timestamp AT TIME ZONE 'Europe/Belgrade')
+      WHERE "createdAt" >= ((${from}::date::timestamp AT TIME ZONE 'Europe/Belgrade') AT TIME ZONE 'UTC')
+        AND "createdAt" < (((${to}::date + INTERVAL '1 day')::timestamp AT TIME ZONE 'Europe/Belgrade') AT TIME ZONE 'UTC')
         AND kind = 'PAYMENT'
     `,
     db.$queryRaw<CategoryQuery[]>`
