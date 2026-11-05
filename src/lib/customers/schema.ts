@@ -43,5 +43,5 @@ export type CustomerSaveResult =
   | { ok: true }
   | {
       ok: false;
-      error: "invalid" | "conflict" | "database" | "authRequired";
+      error: "invalid" | "conflict" | "database" | "authRequired" | "schemaOutdated" | "databaseUnavailable";
     };
