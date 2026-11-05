@@ -30,7 +30,7 @@ export function sortEquipmentRows<T extends SortableEquipment>(
   const displayedValue = (row: T): string => {
     if (sort.key === "tariff") return labels.tariff(row.tariff);
     if (sort.key === "status") return labels.status(row.status);
-    return row[sort.key];
+    return String(row[sort.key]);
   };
 
   // Array.sort is stable. Equal values keep their existing relative order.
