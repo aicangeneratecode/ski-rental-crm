@@ -17,6 +17,8 @@ export type StatusError =
   | "outsideDates"
   | "equipmentUnavailable"
   | "stillIssued"
+  | "schemaOutdated"
+  | "databaseUnavailable"
   | "database";
 
 export type StatusResult =
