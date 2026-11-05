@@ -108,7 +108,7 @@ test("real PostgreSQL: create, issue, payment history, return, archive and resto
     await setBookingArchivedRecord(bookingId, 5, "restore", actorId);
     booking = await db.booking.findUniqueOrThrow({ where: { id: bookingId } });
     assert.equal(booking.archivedAt, null);
-    assert.equal(booking.version, 5);
+    assert.equal(booking.version, 6);
     assert.deepEqual(
       (await db.bookingEvent.findMany({
         where: { bookingId }, orderBy: { bookingVersion: "asc" }, select: { kind: true },
