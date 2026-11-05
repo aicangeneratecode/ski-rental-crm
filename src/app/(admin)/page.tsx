@@ -19,6 +19,7 @@ async function loadRows(today: string): Promise<BookingRow[]> {
 
   const bookings = await getDb().booking.findMany({
     where: {
+      archivedAt: null,
       OR: [
         {
           status: "RESERVED",
