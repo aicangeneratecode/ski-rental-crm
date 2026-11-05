@@ -138,6 +138,7 @@ model Booking {
   total           Int
 
   notes     String   @default("") @db.VarChar(2000)
+  archivedAt DateTime?
   version   Int      @default(1)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -149,6 +150,7 @@ model Booking {
   @@index([customerId])
   @@index([createdById])
   @@index([status, startDate, endDate])
+  @@index([archivedAt, status])
 }
 
 model BookingItem {
@@ -207,6 +209,8 @@ enum BookingEventKind {
   ISSUED
   RETURNED
   CANCELLED
+  ARCHIVED
+  RESTORED
 }
 
 model BookingEvent {
