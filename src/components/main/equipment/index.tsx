@@ -14,11 +14,13 @@ interface EquipmentCatalogProps {
   rows: EquipmentRow[];
   readOnly: boolean;
   initialSelectedId?: string;
+  tariffRates: Record<string, number | null>;
 }
 export default function EquipmentCatalog({
   rows,
   readOnly,
   initialSelectedId,
+  tariffRates,
 }: EquipmentCatalogProps) {
   const t = useTranslations("inventory");
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId && rows.some(r=>r.id===initialSelectedId)?initialSelectedId:null);
@@ -174,6 +176,7 @@ const selectedItem = rows.find((row) => row.id === selectedId);
         <EquipmentForm
           key={editing === "new" ? "new" : `${editing.id}-${editing.version}`}
           item={editing === "new" ? undefined : editing}
+          tariffRates={tariffRates}
           onClose={() => setEditing(null)}
           onSaved={() => setSaved(true)}
         />
