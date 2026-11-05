@@ -16,7 +16,7 @@ import {
 } from "./booking-list-utils";
 
 type Props = { rows: RentalRow[]; customers: BookingCustomer[]; equipment: BookingEquipment[]; today: string };
-const views: RentalView[] = ["all", "pickup", "return", "active", "attention", "balance", "reserved", "returned", "cancelled"];
+const views: RentalView[] = ["all", "pickup", "return", "active", "attention", "balance", "reserved", "returned", "cancelled", "archived"];
 const highlights: RentalView[] = ["pickup", "return", "active", "attention"];
 const sortOptions: RentalSort[] = ["priority", "newest", "startAsc", "startDesc", "endAsc", "endDesc", "nameAsc", "amountDesc", "balanceDesc"];
 const defaultFilters: RentalFilters = { view: "all", query: "", from: "", to: "", balanceOnly: false, sort: "priority" };
@@ -82,7 +82,7 @@ export default function Bookings({ rows, customers, equipment, today }: Props) {
         <button type="button" aria-pressed={filters.view === "all"} onClick={() => setFilter("view", "all")}
           className={`rounded-2xl border p-4 text-start shadow-theme-xs transition-colors hover:border-brand-300 dark:hover:border-brand-700 ${filters.view === "all" ? "border-brand-400 bg-brand-50 dark:border-brand-700 dark:bg-brand-500/10" : "border-gray-200 bg-white dark:border-gray-800 dark:bg-[#1b1e21]"}`}>
           <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{w("metrics.all")}</span>
-          <strong className="mt-2 block text-2xl font-bold tabular-nums">{rows.length}</strong>
+          <strong className="mt-2 block text-2xl font-bold tabular-nums">{counts.all}</strong>
         </button>
         {highlights.map((view) => (
           <button key={view} type="button" aria-pressed={filters.view === view} onClick={() => setFilter("view", view)}
