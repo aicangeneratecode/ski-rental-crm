@@ -10,6 +10,7 @@ import { changeBookingStatusRecord, StatusChangeError } from "./status-repositor
 import { setBookingArchivedRecord, ArchiveBookingError } from "./archive-repository";
 import { savePaymentRecord, PaymentOperationError } from "@/lib/payments/repository";
 import { recordEquipmentInspection } from "@/lib/equipment/maintenance-repository";
+import { purgeArchivedBooking, PurgeError } from "./permanent-delete-repository";
 
 test("real PostgreSQL: create, issue, payment history, return, archive and restore", {
   skip: process.env.CI_TEST_DATABASE_URL !== "1",
@@ -125,6 +126,22 @@ test("real PostgreSQL: create, issue, payment history, return, archive and resto
     const itemAfterReturn = await db.equipment.findUniqueOrThrow({ where: { id: item.id } });
     assert.equal(itemAfterReturn.status, "MAINTENANCE");
     await recordEquipmentInspection({equipmentId:item.id,version:itemAfterReturn.version,kind:"INSPECTION",condition:"OK",note:"Проверено после возврата"},actorId);
+    await assert.rejects(
+      purgeArchivedBooking(bookingId, 6),
+      (error: unknown) => error instanceof PurgeError && error.code === "notArchived",
+    );
+    await setBookingArchivedRecord(bookingId, 6, "archive", actorId);
+    await assert.rejects(
+      purgeArchivedBooking(bookingId, 6),
+      (error: unknown) => error instanceof PurgeError && error.code === "conflict",
+    );
+    await purgeArchivedBooking(bookingId, 7);
+    assert.equal(await db.booking.count({ where: { id: bookingId } }), 0);
+    assert.equal(await db.payment.count({ where: { bookingId } }), 0);
+    assert.equal(await db.bookingEvent.count({ where: { bookingId } }), 0);
+    assert.equal(await db.bookingItem.count({ where: { bookingId } }), 0);
+    assert.equal(await db.equipmentMaintenance.count({ where: { bookingId } }), 0);
+    assert.ok(await db.equipmentMaintenance.count({ where: { equipmentId: item.id } }) >= 3);
     const reserved = await createBookingRecord(values, actorId);
     bookingIds.push(reserved);
     await assert.rejects(
