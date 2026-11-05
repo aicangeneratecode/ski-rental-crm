@@ -62,7 +62,7 @@ export async function loadLedgerPage(period: ReportPeriod, filter: LedgerFilters
     : Prisma.empty;
   const rows = await getDb().$queryRaw<LedgerRaw[]>`
     SELECT p.id, p."bookingId" AS "bookingId",
-      p."createdAt" AS "createdAt",
+      (p."createdAt" AT TIME ZONE 'UTC') AS "createdAt",
       p.amount,p.kind::text AS kind,p.method::text AS method,p.note,
       c.name AS "customerName",c.phone AS "customerPhone",
       u.name AS "employeeName"
@@ -70,8 +70,8 @@ export async function loadLedgerPage(period: ReportPeriod, filter: LedgerFilters
     INNER JOIN "Booking" b ON b.id=p."bookingId"
     INNER JOIN "Customer" c ON c.id=b."customerId"
     INNER JOIN "user" u ON u.id=p."createdById"
-    WHERE p."createdAt" >= (${from}::date::timestamp AT TIME ZONE 'Europe/Belgrade')
-      AND p."createdAt" < ((${to}::date + INTERVAL '1 day')::timestamp AT TIME ZONE 'Europe/Belgrade')
+    WHERE p."createdAt" >= ((${from}::date::timestamp AT TIME ZONE 'Europe/Belgrade') AT TIME ZONE 'UTC')
+      AND p."createdAt" < (((${to}::date + INTERVAL '1 day')::timestamp AT TIME ZONE 'Europe/Belgrade') AT TIME ZONE 'UTC')
       ${conditionKind}
       ${conditionMethod}
       ${conditionSearch}
