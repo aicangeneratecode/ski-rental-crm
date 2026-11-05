@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { Prisma } from "@/generated/prisma/client";
 import { getDb } from "@/lib/db";
+import { PurgeError, purgeArchivedBooking } from "@/lib/bookings/permanent-delete-repository";
 import { classifyDatabaseError, logDatabaseError } from "@/lib/db-errors";
 import { getStaffSession } from "@/lib/require-staff";
 
@@ -49,6 +50,9 @@ export async function deleteRecord(input: unknown): Promise<DeleteRecordResult> 
   const { kind, id, version } = parsed.data;
 
   try {
+    if (kind === "booking") {
+      await purgeArchivedBooking(id, version);
+    } else {
     await getDb().$transaction(
       async (tx) => {
         if (kind === "customer") {
@@ -62,32 +66,6 @@ export async function deleteRecord(input: unknown): Promise<DeleteRecordResult> 
             reject("linkedCustomer");
           }
           const removed = await tx.customer.deleteMany({ where: { id, version } });
-          if (removed.count !== 1) reject("conflict");
-          return;
-        }
-
-        if (kind === "booking") {
-          const booking = await tx.booking.findUnique({
-            where: { id },
-            select: { status: true, version: true, archivedAt: true },
-          });
-          if (!booking) reject("notFound");
-          if (booking.version !== version) reject("conflict");
-          if (!booking.archivedAt || !["RETURNED", "CANCELLED"].includes(booking.status)) {
-            reject("notArchived");
-          }
-          // Deleting an archive record is deliberately irreversible; financial
-          // payments and the rental's action log are removed together.
-          // Equipment inspections remain independently auditable.
-          await tx.equipmentMaintenance.updateMany({
-            where: { bookingId: id }, data: { bookingId: null },
-          });
-          await tx.payment.deleteMany({ where: { bookingId: id } });
-          await tx.bookingEvent.deleteMany({ where: { bookingId: id } });
-          await tx.bookingItem.deleteMany({ where: { bookingId: id } });
-          const removed = await tx.booking.deleteMany({
-            where: { id, version, status: { in: ["RETURNED", "CANCELLED"] }, archivedAt: { not: null } },
-          });
           if (removed.count !== 1) reject("conflict");
           return;
         }
@@ -116,7 +94,9 @@ export async function deleteRecord(input: unknown): Promise<DeleteRecordResult> 
         timeout: 15000,
       },
     );
+    }
   } catch (error) {
+    if (error instanceof PurgeError) return { ok: false, error: error.code };
     if (error instanceof DeleteRejected) return { ok: false, error: error.reason };
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2003") {
