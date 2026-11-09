@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 
-import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
@@ -31,6 +32,7 @@ const tabs = ["overview", "payment", "history"] as const;
 
 export default function BookingDetails({ booking, onClose, onEdit }: Props) {
   const t = useTranslations("bookings");
+  const agreementT = useTranslations("agreement");
   const [tab, setTab] = useState<(typeof tabs)[number]>("overview");
 
   return (
@@ -40,7 +42,11 @@ export default function BookingDetails({ booking, onClose, onEdit }: Props) {
         if (!open) onClose();
       }}
     >
-      <SheetContent side="right" style={{ width: "min(100vw, 640px)", maxWidth: "none" }} className="overflow-y-auto border-[#e9e6e1] dark:border-[#313337] dark:bg-[#1b1e21]">
+      <SheetContent
+        side="right"
+        style={{ width: "min(100vw, 640px)", maxWidth: "none" }}
+        className="overflow-y-auto border-[#e9e6e1] dark:border-[#313337] dark:bg-[#1b1e21]"
+      >
         <SheetHeader>
           <SheetTitle>
             {t("reference", { id: booking.id.slice(0, 8) })}
@@ -125,12 +131,36 @@ export default function BookingDetails({ booking, onClose, onEdit }: Props) {
         )}
 
         <div className="flex flex-wrap justify-end gap-2">
-          {onEdit && (booking.status === "RESERVED" || booking.status === "ISSUED") && (
-            <>
-              {booking.status === "RESERVED" && <Button type="button" variant="outline" onClick={() => onEdit(booking.id, "edit")}>{t("editBooking")}</Button>}
-              <Button type="button" onClick={() => onEdit(booking.id, "extend")}>{t("extendBooking")}</Button>
-            </>
+          {booking.status !== "CANCELLED" && (
+            <Link
+              href={`/agreements/${booking.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonVariants({ variant: "outline" })}
+            >
+              {agreementT("button")}
+            </Link>
           )}
+          {onEdit &&
+            (booking.status === "RESERVED" || booking.status === "ISSUED") && (
+              <>
+                {booking.status === "RESERVED" && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => onEdit(booking.id, "edit")}
+                  >
+                    {t("editBooking")}
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  onClick={() => onEdit(booking.id, "extend")}
+                >
+                  {t("extendBooking")}
+                </Button>
+              </>
+            )}
           <Button type="button" variant="outline" onClick={onClose}>
             {t("layout.close")}
           </Button>
