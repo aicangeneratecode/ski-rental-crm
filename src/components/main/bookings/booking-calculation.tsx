@@ -1,10 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import {
-  formatBookingMoney,
-  type BookingRow,
-} from "@/lib/bookings/types";
+import { formatBookingMoney, type BookingRow } from "@/lib/bookings/types";
 
 export default function BookingCalculation({
   booking,
@@ -29,17 +26,29 @@ export default function BookingCalculation({
         <table className="w-full min-w-[460px] text-sm">
           <thead className="bg-gray-50 dark:bg-gray-800">
             <tr>
-              <th scope="col" className="p-3 text-start">{t("item")}</th>
-              <th scope="col" className="p-3 text-end">{t("rate")}</th>
-              <th scope="col" className="p-3 text-end">{t("amount")}</th>
+              <th scope="col" className="p-3 text-start">
+                {t("item")}
+              </th>
+              <th scope="col" className="p-3 text-end">
+                {t("rate")}
+              </th>
+              <th scope="col" className="p-3 text-end">
+                {t("amount")}
+              </th>
             </tr>
           </thead>
           <tbody>
             {booking.items.map((item) => (
-              <tr key={item.id} className="border-t border-gray-100 dark:border-gray-800">
+              <tr
+                key={item.id}
+                className="border-t border-gray-100 dark:border-gray-800"
+              >
                 <td className="p-3">
                   <p className="font-medium">{item.name}</p>
                   <p className="text-xs text-gray-500">{item.code}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {t("size")}: {item.size?.trim() || "—"}
+                  </p>
                   {item.complimentary && (
                     <p className="mt-1 text-xs text-green-600">{t("free")}</p>
                   )}
@@ -62,8 +71,14 @@ export default function BookingCalculation({
           <dd className="shrink-0">{formatBookingMoney(booking.subtotal)}</dd>
         </div>
         <div className="flex justify-between gap-4">
-          <dt>{booking.discountPercent > 0 ? t("discount", { percent: booking.discountPercent }) : t("fixedDiscount")}</dt>
-          <dd className="shrink-0">−{formatBookingMoney(booking.discountAmount)}</dd>
+          <dt>
+            {booking.discountPercent > 0
+              ? t("discount", { percent: booking.discountPercent })
+              : t("fixedDiscount")}
+          </dt>
+          <dd className="shrink-0">
+            −{formatBookingMoney(booking.discountAmount)}
+          </dd>
         </div>
         <div className="flex justify-between gap-4 border-t border-gray-200 pt-3 text-lg font-semibold dark:border-gray-700">
           <dt>{t("total")}</dt>

@@ -96,6 +96,7 @@ async function loadData() {
             equipmentId: true,
             equipmentCode: true,
             equipmentName: true,
+            equipment: { select: { size: true } },
             complimentary: true,
             dailyRate: true,
             amount: true,
@@ -142,10 +143,7 @@ async function loadData() {
       notes: booking.notes,
       netPaid: booking.payments.reduce(
         (sum, payment) =>
-          sum +
-          (payment.kind === "PAYMENT"
-            ? payment.amount
-            : -payment.amount),
+          sum + (payment.kind === "PAYMENT" ? payment.amount : -payment.amount),
         0,
       ),
       items: booking.items.map((item) => ({
@@ -153,6 +151,7 @@ async function loadData() {
         equipmentId: item.equipmentId,
         code: item.equipmentCode,
         name: item.equipmentName,
+        size: item.equipment.size,
         complimentary: item.complimentary,
         dailyRate: item.dailyRate,
         amount: item.amount,
@@ -161,7 +160,17 @@ async function loadData() {
   };
 }
 
-export default async function Page({searchParams}:{searchParams:Promise<{customerId?:string;repeat?:string;startDate?:string;endDate?:string;bookingId?:string}>}) {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    customerId?: string;
+    repeat?: string;
+    startDate?: string;
+    endDate?: string;
+    bookingId?: string;
+  }>;
+}) {
   await requireStaff();
   setRequestLocale("ru");
 
@@ -172,7 +181,15 @@ export default async function Page({searchParams}:{searchParams:Promise<{custome
   return (
     <>
       {data ? (
-        <Bookings {...data} today={getBelgradeDate()} prefillCustomerId={query.customerId} repeatBookingId={query.repeat} prefillStartDate={query.startDate} prefillEndDate={query.endDate} openBookingId={query.bookingId} />
+        <Bookings
+          {...data}
+          today={getBelgradeDate()}
+          prefillCustomerId={query.customerId}
+          repeatBookingId={query.repeat}
+          prefillStartDate={query.startDate}
+          prefillEndDate={query.endDate}
+          openBookingId={query.bookingId}
+        />
       ) : (
         <ComponentCard title={t("offlineTitle")}>
           <p className="text-sm text-gray-500">{t("offlineBody")}</p>

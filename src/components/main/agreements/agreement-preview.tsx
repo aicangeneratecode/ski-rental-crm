@@ -130,13 +130,20 @@ export default function AgreementPreview({ booking, today }: Props) {
           </Field>
           <Field>
             <FieldLabel htmlFor="passport-date">{t("passportDate")}</FieldLabel>
-            <Input
-              id="passport-date"
-              type="date"
-              min="1900-01-01"
-              max={today}
-              {...register("passportDate")}
-              aria-invalid={!!errors.passportDate}
+            <Controller
+              name="passportDate"
+              control={control}
+              render={({ field }) => (
+                <RentalDatePicker
+                  id="passport-date"
+                  label={t("passportDate")}
+                  value={field.value}
+                  onChange={field.onChange}
+                  min="1900-01-01"
+                  max={today}
+                  invalid={!!errors.passportDate}
+                />
+              )}
             />
             {errors.passportDate && <p role="alert">{t("invalidDate")}</p>}
           </Field>

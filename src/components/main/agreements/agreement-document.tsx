@@ -74,6 +74,8 @@ export default function AgreementDocument({ booking, fields }: Props) {
                   {item.name}
                   <br />
                   <small>{item.code}</small>
+                  <br />
+                  <small>Size / Length: {item.size?.trim() || "—"}</small>
                 </td>
                 <td>{money(item.dailyRate)}</td>
                 <td>1</td>
@@ -86,8 +88,9 @@ export default function AgreementDocument({ booking, fields }: Props) {
         <p className="agreement-calculation">
           * Amount for {booking.paidDays} paid day(s), before the booking
           discount. Subtotal: {money(booking.subtotal)} RSD. Booking discount
-          {booking.discountPercent ? ` (${booking.discountPercent}%)` : ""}:{" "}
-          {money(booking.discountAmount)} RSD.
+          {booking.discountPercent
+            ? ` (${booking.discountPercent}%)`
+            : ""}: {money(booking.discountAmount)} RSD.
           {booking.travelDay
             ? " A free travel day is included in the rental period and excluded from the paid days."
             : ""}

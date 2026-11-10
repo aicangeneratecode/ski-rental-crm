@@ -3,7 +3,10 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import ComponentCard from "@/components/common/component-card";
 import RentalCalendar from "@/components/main/calendar";
-import type { CalendarInventory, CalendarRental } from "@/components/main/calendar/calendar-types";
+import type {
+  CalendarInventory,
+  CalendarRental,
+} from "@/components/main/calendar/calendar-types";
 import { getDb } from "@/lib/db";
 import { requireStaff } from "@/lib/require-staff";
 import { getBelgradeDate } from "@/lib/bookings/today";
@@ -11,7 +14,10 @@ import { getBelgradeDate } from "@/lib/bookings/today";
 export const metadata: Metadata = { title: "Календарь аренд | TOP RIDE" };
 export const dynamic = "force-dynamic";
 
-async function loadData(): Promise<{ rentals: CalendarRental[]; inventory: CalendarInventory[] }> {
+async function loadData(): Promise<{
+  rentals: CalendarRental[];
+  inventory: CalendarInventory[];
+}> {
   const db = getDb();
   const [bookings, equipment] = await Promise.all([
     db.booking.findMany({
@@ -44,19 +50,30 @@ async function loadData(): Promise<{ rentals: CalendarRental[]; inventory: Calen
             complimentary: true,
             dailyRate: true,
             amount: true,
-            equipment: { select: { tariff: true } },
+            equipment: { select: { tariff: true, size: true } },
           },
         },
       },
     }),
     db.equipment.findMany({
       orderBy: { code: "asc" },
-      select: { id: true, code: true, name: true, size: true, tariff: true, status: true },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        size: true,
+        tariff: true,
+        status: true,
+      },
     }),
   ]);
 
   const inventory: CalendarInventory[] = equipment.map((item) => {
-    if (item.status !== "READY" && item.status !== "MAINTENANCE" && item.status !== "ARCHIVED") {
+    if (
+      item.status !== "READY" &&
+      item.status !== "MAINTENANCE" &&
+      item.status !== "ARCHIVED"
+    ) {
       throw new Error("INVALID_EQUIPMENT_STATUS");
     }
     return {
@@ -78,7 +95,9 @@ async function loadData(): Promise<{ rentals: CalendarRental[]; inventory: Calen
     createdById: booking.createdById,
     createdByName: booking.createdBy.name,
     equipmentIds: booking.items.map((item) => item.equipmentId),
-    tariffs: Array.from(new Set(booking.items.map((item) => item.equipment.tariff))),
+    tariffs: Array.from(
+      new Set(booking.items.map((item) => item.equipment.tariff)),
+    ),
     startDate: booking.startDate.toISOString().slice(0, 10),
     endDate: booking.endDate.toISOString().slice(0, 10),
     status: booking.status,
@@ -93,6 +112,7 @@ async function loadData(): Promise<{ rentals: CalendarRental[]; inventory: Calen
       id: item.id,
       code: item.equipmentCode,
       name: item.equipmentName,
+      size: item.equipment.size,
       complimentary: item.complimentary,
       dailyRate: item.dailyRate,
       amount: item.amount,

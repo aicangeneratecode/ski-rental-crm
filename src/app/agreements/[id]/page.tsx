@@ -42,6 +42,7 @@ export default async function AgreementPage({
           id: true,
           equipmentCode: true,
           equipmentName: true,
+          equipment: { select: { size: true } },
           dailyRate: true,
           complimentary: true,
           amount: true,
@@ -59,11 +60,14 @@ export default async function AgreementPage({
         customerName: customer.name,
         startDate: startDate.toISOString().slice(0, 10),
         endDate: endDate.toISOString().slice(0, 10),
-        items: items.map(({ equipmentCode, equipmentName, ...item }) => ({
-          ...item,
-          code: equipmentCode,
-          name: equipmentName,
-        })),
+        items: items.map(
+          ({ equipmentCode, equipmentName, equipment, ...item }) => ({
+            ...item,
+            code: equipmentCode,
+            name: equipmentName,
+            size: equipment.size,
+          }),
+        ),
       }}
     />
   );

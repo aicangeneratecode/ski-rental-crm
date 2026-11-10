@@ -34,8 +34,7 @@ function validDate(value: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(`${value}T00:00:00.000Z`);
   return (
-    Number.isFinite(date.getTime()) &&
-    date.toISOString().slice(0, 10) === value
+    Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value
   );
 }
 
@@ -73,8 +72,13 @@ export default function RentalDatePicker({
   const [month, setMonth] = useState(0);
   const [day, setDay] = useState("");
 
-  const lower = min && min > "2000-01-01" ? min : "2000-01-01";
-  const upper = max && max < "2100-12-31" ? max : "2100-12-31";
+  const lower = min && validDate(min) ? min : "2000-01-01";
+  const upper = max && validDate(max) ? max : "2100-12-31";
+  const firstYear = Number(lower.slice(0, 4));
+  const lastYear = Number(upper.slice(0, 4));
+  const firstMonth = lower.slice(0, 7);
+  const lastMonth = upper.slice(0, 7);
+  const currentMonth = isoDate(year, month, 1).slice(0, 7);
 
   const allowed = (candidate: string) =>
     validDate(candidate) && candidate >= lower && candidate <= upper;
@@ -99,7 +103,12 @@ export default function RentalDatePicker({
 
   function moveMonth(delta: number) {
     const next = new Date(Date.UTC(year, month + delta, 1));
-    if (next.getUTCFullYear() < 2000 || next.getUTCFullYear() > 2100) return;
+    const nextMonth = isoDate(
+      next.getUTCFullYear(),
+      next.getUTCMonth(),
+      1,
+    ).slice(0, 7);
+    if (nextMonth < firstMonth || nextMonth > lastMonth) return;
     setYear(next.getUTCFullYear());
     setMonth(next.getUTCMonth());
   }
@@ -124,7 +133,9 @@ export default function RentalDatePicker({
         onClick={showCalendar}
       >
         <span>
-          {validDate(value) ? value.split("-").reverse().join(".") : t("placeholder")}
+          {validDate(value)
+            ? value.split("-").reverse().join(".")
+            : t("placeholder")}
         </span>
         <span aria-hidden="true">▾</span>
       </Button>
@@ -132,7 +143,9 @@ export default function RentalDatePicker({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>{label} · {t("title")}</DialogTitle>
+            <DialogTitle>
+              {label} · {t("title")}
+            </DialogTitle>
             <DialogDescription>{t("hint")}</DialogDescription>
           </DialogHeader>
 
@@ -146,7 +159,9 @@ export default function RentalDatePicker({
                   onChange={(event) => setMonth(Number(event.target.value))}
                 >
                   {months.map((name, index) => (
-                    <option key={name} value={index}>{name}</option>
+                    <option key={name} value={index}>
+                      {name}
+                    </option>
                   ))}
                 </select>
               </label>
@@ -158,9 +173,14 @@ export default function RentalDatePicker({
                   value={year}
                   onChange={(event) => setYear(Number(event.target.value))}
                 >
-                  {Array.from({ length: 101 }, (_, index) => 2000 + index).map(
-                    (value) => <option key={value} value={value}>{value}</option>,
-                  )}
+                  {Array.from(
+                    { length: Math.max(0, lastYear - firstYear + 1) },
+                    (_, index) => firstYear + index,
+                  ).map((value) => (
+                    <option key={value} value={value}>
+                      {value}
+                    </option>
+                  ))}
                 </select>
               </label>
             </div>
@@ -170,7 +190,7 @@ export default function RentalDatePicker({
                 type="button"
                 variant="outline"
                 aria-label={t("previous")}
-                disabled={year === 2000 && month === 0}
+                disabled={currentMonth <= firstMonth}
                 onClick={() => moveMonth(-1)}
               >
                 ←
@@ -179,7 +199,7 @@ export default function RentalDatePicker({
                 type="button"
                 variant="outline"
                 aria-label={t("next")}
-                disabled={year === 2100 && month === 11}
+                disabled={currentMonth >= lastMonth}
                 onClick={() => moveMonth(1)}
               >
                 →
@@ -188,7 +208,10 @@ export default function RentalDatePicker({
 
             <div className="grid grid-cols-7 gap-1">
               {weekdays.map((name) => (
-                <span key={name} className="py-2 text-center text-xs text-gray-500">
+                <span
+                  key={name}
+                  className="py-2 text-center text-xs text-gray-500"
+                >
                   {name}
                 </span>
               ))}
@@ -230,11 +253,17 @@ export default function RentalDatePicker({
             </label>
 
             {!canApply && (
-              <p role="status" className="text-xs text-red-600">{t("invalid")}</p>
+              <p role="status" className="text-xs text-red-600">
+                {t("invalid")}
+              </p>
             )}
 
             <div className="flex flex-wrap gap-2">
-              <Button type="button" disabled={!canApply} onClick={() => choose(candidate)}>
+              <Button
+                type="button"
+                disabled={!canApply}
+                onClick={() => choose(candidate)}
+              >
                 {t("apply")}
               </Button>
               {clearable && (
@@ -249,7 +278,11 @@ export default function RentalDatePicker({
                   {t("clear")}
                 </Button>
               )}
-              <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setOpen(false)}
+              >
                 {t("cancel")}
               </Button>
             </div>
