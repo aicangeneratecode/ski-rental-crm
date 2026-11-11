@@ -86,7 +86,7 @@ export default function BookingCustomerPicker({
 
       {open && (
         <div id={listId} role="listbox" aria-label={t("chooseCustomer")}
-          className="absolute inset-x-0 top-full z-50 mt-1 max-h-64 overflow-y-auto rounded-xl border border-gray-200 bg-white p-1 shadow-theme-lg dark:border-gray-700 dark:bg-[#232629]">
+          className="booking-customer-suggestions absolute inset-x-0 top-full z-50 mt-1 max-h-64 overflow-y-auto rounded-xl border border-gray-200 bg-white p-1 shadow-theme-lg dark:border-gray-700 dark:bg-[#232629]">
           {suggestions.map((customer, index) => (
             <button
               id={`${listId}-option-${index}`}

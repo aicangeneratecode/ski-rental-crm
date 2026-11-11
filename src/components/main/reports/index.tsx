@@ -223,7 +223,7 @@ export default function ReportsDashboard({data,today}:{data:ReportData;today:str
         </div>
       ) : (
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[510px] text-sm">
+          <table className="mobile-report-table w-full min-w-[510px] text-sm">
             <thead><tr className="border-b border-gray-200 text-start text-xs text-gray-500 dark:border-gray-700">
               <th scope="col" className="px-2 py-3 text-start">{t("equipmentName")}</th>
               <th scope="col" className="px-2 py-3 text-end">{t("rentalCount")}</th>
@@ -231,9 +231,9 @@ export default function ReportsDashboard({data,today}:{data:ReportData;today:str
             </tr></thead>
             <tbody>{data.popular.map(row=>(
               <tr key={row.equipmentId} className="border-b border-gray-100 last:border-0 dark:border-gray-800">
-                <td className="px-2 py-3"><strong>{row.name} · {row.size}</strong><span className="block text-xs text-gray-500">{row.code}</span></td>
-                <td className="px-2 py-3 text-end tabular-nums">{row.bookings}</td>
-                <td className="px-2 py-3 text-end font-semibold tabular-nums">{row.unitDays}</td>
+                <td data-label={t("equipmentName")} className="px-2 py-3"><strong>{row.name} · {row.size}</strong><span className="block text-xs text-gray-500">{row.code}</span></td>
+                <td data-label={t("rentalCount")} className="px-2 py-3 text-end tabular-nums">{row.bookings}</td>
+                <td data-label={t("equipmentDays")} className="px-2 py-3 text-end font-semibold tabular-nums">{row.unitDays}</td>
               </tr>
             ))}</tbody>
           </table>

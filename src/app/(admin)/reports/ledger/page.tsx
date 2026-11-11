@@ -107,7 +107,7 @@ export default async function Page({searchParams}:{
           <p className="text-xs text-gray-500">{t("pageInfo",{count:result.rows.length})}</p>
         </div>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[780px] text-sm">
+          <table className="mobile-report-table w-full min-w-[780px] text-sm">
             <thead>
               <tr className="border-b border-gray-200 text-xs text-gray-500 dark:border-gray-700">
                 {(["date","customer","reference","kind","method","amount","employee"] as const).map(key=>(
@@ -118,24 +118,24 @@ export default async function Page({searchParams}:{
             <tbody>
               {result.rows.map(row=>(
                 <tr key={row.id} className="border-b border-gray-100 last:border-0 dark:border-gray-800">
-                  <td className="px-3 py-4 whitespace-nowrap text-xs text-gray-500">
+                  <td data-label={t("date")} className="px-3 py-4 whitespace-nowrap text-xs text-gray-500">
                     {new Intl.DateTimeFormat("ru-RU",{timeZone:"Europe/Belgrade",dateStyle:"short",timeStyle:"short"}).format(new Date(row.createdAt))}
                   </td>
-                  <td className="px-3 py-4">
+                  <td data-label={t("customer")} className="px-3 py-4">
                     <p className="font-semibold">{row.customerName}</p>
                     <span className="text-xs text-gray-500">{row.customerPhone}</span>
                   </td>
-                  <td className="px-3 py-4">
+                  <td data-label={t("reference")} className="px-3 py-4">
                     <Link href={`/bookings?bookingId=${row.bookingId}`} className="font-semibold text-brand-700 hover:underline dark:text-brand-400">
                       #{row.bookingId.slice(0,8).toUpperCase()}
                     </Link>
                   </td>
-                  <td className="px-3 py-4">{payments(`kinds.${row.kind}`)}</td>
-                  <td className="px-3 py-4">{payments(`methods.${row.method}`)}</td>
-                  <td className={`px-3 py-4 text-end font-bold tabular-nums ${row.kind==="REFUND"?"text-rose-700 dark:text-rose-300":"text-emerald-700 dark:text-emerald-300"}`}>
+                  <td data-label={t("kind")} className="px-3 py-4">{payments(`kinds.${row.kind}`)}</td>
+                  <td data-label={t("method")} className="px-3 py-4">{payments(`methods.${row.method}`)}</td>
+                  <td data-label={t("amount")} className={`px-3 py-4 text-end font-bold tabular-nums ${row.kind==="REFUND"?"text-rose-700 dark:text-rose-300":"text-emerald-700 dark:text-emerald-300"}`}>
                     {row.kind==="REFUND"?"−":"+"}{formatRsd(row.amount)}
                   </td>
-                  <td className="px-3 py-4 text-xs">{row.employeeName}{row.note&&<span className="mt-1 block max-w-36 truncate text-gray-500" title={row.note}>{row.note}</span>}</td>
+                  <td data-label={t("employee")} className="px-3 py-4 text-xs">{row.employeeName}{row.note&&<span className="mt-1 block max-w-36 truncate text-gray-500" title={row.note}>{row.note}</span>}</td>
                 </tr>
               ))}
             </tbody>

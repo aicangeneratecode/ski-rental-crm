@@ -22,7 +22,7 @@ export default function BookingCalculation({
         </span>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
+      <div className="hidden overflow-x-auto rounded-xl border border-gray-200 sm:block dark:border-gray-700">
         <table className="w-full min-w-[460px] text-sm">
           <thead className="bg-gray-50 dark:bg-gray-800">
             <tr>
@@ -63,6 +63,43 @@ export default function BookingCalculation({
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="space-y-3 sm:hidden">
+        {booking.items.map((item) => (
+          <article
+            key={item.id}
+            className="rounded-xl border border-gray-200 p-3 dark:border-gray-700"
+          >
+            <p className="font-semibold break-words">{item.name}</p>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              {item.code} · {t("size")}: {item.size?.trim() || "—"}
+            </p>
+            {item.complimentary && (
+              <p className="mt-1 text-xs text-green-600 dark:text-green-400">
+                {t("free")}
+              </p>
+            )}
+            <dl className="mt-3 grid grid-cols-2 gap-3">
+              <div>
+                <dt className="text-xs text-gray-500 dark:text-gray-400">
+                  {t("rate")}
+                </dt>
+                <dd className="mt-1 font-medium">
+                  {formatBookingMoney(item.dailyRate)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-gray-500 dark:text-gray-400">
+                  {t("amount")}
+                </dt>
+                <dd className="mt-1 font-semibold">
+                  {formatBookingMoney(item.amount)}
+                </dd>
+              </div>
+            </dl>
+          </article>
+        ))}
       </div>
 
       <dl className="space-y-3 rounded-xl bg-gray-50 p-4 text-sm dark:bg-gray-800">

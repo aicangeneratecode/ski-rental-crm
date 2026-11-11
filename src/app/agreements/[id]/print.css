@@ -134,3 +134,42 @@
 .agreement-appendix td {
   padding: 1.5mm;
 }
+
+@media screen and (max-width: 639px) {
+  .agreement-workspace {
+    padding: 12px 8px;
+  }
+  .agreement-toolbar {
+    padding: 16px;
+  }
+  .agreement-page {
+    padding: 16px 12px;
+  }
+  .agreement-document {
+    font-size: 12px;
+  }
+  .agreement-document h1 {
+    font-size: 22px;
+  }
+  .agreement-document h2 {
+    font-size: 14px;
+  }
+  .agreement-document table {
+    font-size: 10px;
+  }
+  .agreement-document th,
+  .agreement-document td {
+    padding: 4px;
+  }
+  .agreement-document th:first-child {
+    width: 35%;
+  }
+  .agreement-meta {
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .agreement-signature-grid {
+    gap: 16px;
+    font-size: 11px;
+  }
+}

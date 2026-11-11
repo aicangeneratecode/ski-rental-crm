@@ -38,7 +38,7 @@ export default function BookingRentalCard({ row, today, compact, onOpen, onEdit 
   const tags = compact ? row.items.slice(0, 2) : row.items.slice(0, 4);
   const extra = row.items.length - tags.length;
   return (
-    <article className="overflow-hidden rounded-2xl border border-[#e9e6e1] bg-white shadow-theme-xs transition-colors hover:border-brand-200 dark:border-[#313337] dark:bg-[#1b1e21] dark:hover:border-brand-800">
+    <article className="rental-card overflow-hidden rounded-2xl border border-[#e9e6e1] bg-white shadow-theme-xs transition-colors hover:border-brand-200 dark:border-[#313337] dark:bg-[#1b1e21] dark:hover:border-brand-800">
       <div className="grid lg:grid-cols-[minmax(130px,0.85fr)_minmax(165px,1.1fr)_minmax(250px,3fr)_minmax(175px,1.2fr)]">
         <div className={`flex flex-col items-start gap-2 border-b border-gray-100 lg:border-e lg:border-b-0 dark:border-gray-800 ${compact ? "p-3" : "p-4"}`}>
           <span className="text-sm font-extrabold tracking-tight text-gray-900 dark:text-white">#{row.id.slice(0, 8).toUpperCase()}</span>

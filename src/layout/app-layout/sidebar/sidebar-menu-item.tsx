@@ -5,7 +5,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { SidebarMenuItem as UiSidebarMenuItem } from "@/components/ui/sidebar";
+import { SidebarMenuItem as UiSidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 import { Link } from "@/i18n/navigation";
 import { ChevronDownIcon } from "@/icons";
 import { cn } from "@/utils";
@@ -29,6 +29,7 @@ export default function SidebarMenuItem({
   onToggle,
 }: SidebarMenuItemProps) {
   const t = useTranslations("sidebar");
+  const { isMobile, setOpenMobile } = useSidebar();
 
   const hasSubItems = Boolean(nav.subItems?.length);
   const hasActiveChild = Boolean(
@@ -107,6 +108,7 @@ export default function SidebarMenuItem({
         nav.path && (
           <Link
             href={nav.path}
+            onClick={() => { if (isMobile) setOpenMobile(false); }}
             target={nav.target}
             aria-current={isDirectActive ? "page" : undefined}
             aria-label={t(`items.${nav.key}`)}

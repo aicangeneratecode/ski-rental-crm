@@ -52,11 +52,14 @@ function DialogContent({
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Popup
+        initialFocus={(type) =>
+          type === "keyboard" || !window.matchMedia("(pointer: coarse)").matches
+        }
         data-slot="dialog-content"
         className={cn(
           fullScreen
-            ? "fixed inset-0 z-101 flex flex-col justify-between w-screen h-dvh max-w-none rounded-none border-none bg-white p-6 sm:p-10 text-sm text-gray-700 shadow-none duration-100 outline-none overflow-y-auto data-closed:animate-out data-closed:fade-out-0 data-open:animate-in data-open:fade-in-0 dark:bg-[#1E2635] dark:text-gray-300"
-            : "fixed inset-s-1/2 top-1/2 z-101 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-700 shadow-theme-lg duration-100 outline-none data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 sm:max-w-lg rtl:translate-x-1/2 dark:border-gray-800 dark:bg-[#1E2635] dark:text-gray-300",
+            ? "fixed inset-0 z-101 flex h-dvh w-screen max-w-none flex-col justify-between overflow-y-auto rounded-none border-none bg-white p-6 text-sm text-gray-700 shadow-none duration-100 outline-none data-closed:animate-out data-closed:fade-out-0 data-open:animate-in data-open:fade-in-0 sm:p-10 dark:bg-[#1E2635] dark:text-gray-300"
+            : "fixed inset-s-1/2 top-1/2 z-101 grid max-h-[calc(100dvh-2rem)] w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto overscroll-contain rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-700 shadow-theme-lg duration-100 outline-none data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 sm:max-w-lg rtl:translate-x-1/2 dark:border-gray-800 dark:bg-[#1E2635] dark:text-gray-300",
           className,
         )}
         {...props}
@@ -71,13 +74,13 @@ function DialogContent({
                 className={cn(
                   "rounded-full text-gray-400 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white",
                   fullScreen
-                    ? "absolute inset-e-4 top-4 sm:inset-e-6 sm:top-6 size-11 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700"
+                    ? "absolute inset-e-4 top-4 size-11 bg-gray-100 hover:bg-gray-200 sm:inset-e-6 sm:top-6 dark:bg-gray-800 dark:hover:bg-gray-700"
                     : "absolute inset-e-3 top-3",
                 )}
                 size={fullScreen ? "icon-lg" : "icon-sm"}
               >
                 <XIcon className={fullScreen ? "size-6" : undefined} />
-                <span className="sr-only">Close</span>
+                <span className="sr-only">Закрыть</span>
               </Button>
             }
           />
@@ -91,7 +94,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn("flex flex-col gap-2", className)}
+      className={cn("flex shrink-0 flex-col gap-2 pe-10", className)}
       {...props}
     />
   );

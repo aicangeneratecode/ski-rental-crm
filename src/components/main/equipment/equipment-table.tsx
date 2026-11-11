@@ -1,4 +1,5 @@
 "use client";
+import EquipmentMobileList from "./equipment-mobile-list";
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { flexRender, useTable, type ColumnDef } from "@tanstack/react-table";
@@ -32,7 +33,13 @@ export default function EquipmentTable({
 }: EquipmentTableProps) {
   const t = useTranslations("inventory");
   const profileT = useTranslations("equipmentProfile");
-  const sortableColumns: readonly string[] = ["name", "tariff", "size", "dailyRate", "status"];
+  const sortableColumns: readonly string[] = [
+    "name",
+    "tariff",
+    "size",
+    "dailyRate",
+    "status",
+  ];
   const columns = useMemo<ColumnDef<Record<string, never>, EquipmentRow>[]>(
     () => [
       { accessorKey: "code", header: t("fields.code") },
@@ -77,7 +84,7 @@ export default function EquipmentTable({
             >
               {profileT("open")}
             </Button>
-      
+
             <Button
               type="button"
               variant="ghost"
@@ -107,62 +114,96 @@ export default function EquipmentTable({
     columns,
   });
   return (
-    <div className="topride-data-table overflow-x-auto">
-      <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((group) => (
-            <TableRow key={group.id}>
-              {group.headers.map((header) => (
-                <TableCell
-                  isHeader
-                  key={header.id}
-                  aria-sort={sort?.key === header.column.id
-                    ? sort.direction === "asc" ? "ascending" : "descending"
-                    : undefined}
-                  className="border-b border-gray-200 px-4 py-3 text-start text-xs font-medium whitespace-nowrap text-gray-500 dark:border-gray-800 dark:text-gray-400"
-                >
-                  {sortableColumns.includes(header.column.id) ? (
-                    <button
-                      type="button"
-                      onClick={() => onSort(header.column.id as EquipmentSortKey)}
-                      aria-label={t("sortByColumn", {
-                        column: typeof header.column.columnDef.header === "string"
-                          ? header.column.columnDef.header
-                          : header.column.id,
-                      })}
-                      className={`inline-flex min-h-8 items-center gap-2 rounded-lg px-1.5 text-start font-semibold transition-colors hover:bg-gray-100 hover:text-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 dark:hover:bg-gray-800 dark:hover:text-brand-300 ${sort?.key === header.column.id ? "text-brand-700 dark:text-brand-300" : ""}`}
-                    >
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                      <span aria-hidden="true" className={sort?.key === header.column.id ? "text-brand-600 dark:text-brand-400" : "text-gray-400"}>
-                        {sort?.key === header.column.id
-                          ? sort.direction === "asc" ? "↑" : "↓"
-                          : "↕"}
-                      </span>
-                    </button>
-                  ) : flexRender(header.column.columnDef.header, header.getContext())}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {table.getRowModel().rows.map((row) => (
-            <TableRow
-              key={row.id}
-              className="border-b border-gray-100 last:border-0 dark:border-gray-800"
-            >
-              {row.getAllCells().map((cell) => (
-                <TableCell
-                  key={cell.id}
-                  className="px-4 py-4 text-sm whitespace-nowrap text-gray-800 dark:text-gray-200"
-                >
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+    <>
+      <EquipmentMobileList
+        rows={rows}
+        onEdit={onEdit}
+        onView={onView}
+        readOnly={readOnly}
+        sort={sort}
+        onSort={onSort}
+      />
+      <div className="topride-data-table hidden overflow-x-auto md:block">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((group) => (
+              <TableRow key={group.id}>
+                {group.headers.map((header) => (
+                  <TableCell
+                    isHeader
+                    key={header.id}
+                    aria-sort={
+                      sort?.key === header.column.id
+                        ? sort.direction === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : undefined
+                    }
+                    className="border-b border-gray-200 px-4 py-3 text-start text-xs font-medium whitespace-nowrap text-gray-500 dark:border-gray-800 dark:text-gray-400"
+                  >
+                    {sortableColumns.includes(header.column.id) ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onSort(header.column.id as EquipmentSortKey)
+                        }
+                        aria-label={t("sortByColumn", {
+                          column:
+                            typeof header.column.columnDef.header === "string"
+                              ? header.column.columnDef.header
+                              : header.column.id,
+                        })}
+                        className={`inline-flex min-h-8 items-center gap-2 rounded-lg px-1.5 text-start font-semibold transition-colors hover:bg-gray-100 hover:text-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 dark:hover:bg-gray-800 dark:hover:text-brand-300 ${sort?.key === header.column.id ? "text-brand-700 dark:text-brand-300" : ""}`}
+                      >
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                        <span
+                          aria-hidden="true"
+                          className={
+                            sort?.key === header.column.id
+                              ? "text-brand-600 dark:text-brand-400"
+                              : "text-gray-400"
+                          }
+                        >
+                          {sort?.key === header.column.id
+                            ? sort.direction === "asc"
+                              ? "↑"
+                              : "↓"
+                            : "↕"}
+                        </span>
+                      </button>
+                    ) : (
+                      flexRender(
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )
+                    )}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows.map((row) => (
+              <TableRow
+                key={row.id}
+                className="border-b border-gray-100 last:border-0 dark:border-gray-800"
+              >
+                {row.getAllCells().map((cell) => (
+                  <TableCell
+                    key={cell.id}
+                    className="px-4 py-4 text-sm whitespace-nowrap text-gray-800 dark:text-gray-200"
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </>
   );
 }
